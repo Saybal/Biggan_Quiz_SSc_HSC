@@ -1,10 +1,4 @@
-/**
- * client/src/api/index.js
- *
- * Every backend call lives here. Components never import axios directly —
- * they always go through this module. This makes it trivial to mock,
- * change base URLs, or add caching later.
- */
+
 import api from './axios.js'
 
 // ═══════════════════════════════════════════════════════════════
