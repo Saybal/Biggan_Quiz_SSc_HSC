@@ -22,7 +22,7 @@ const __dirname  = dirname(__filename)
 if (!admin.apps.length) {
   // Read the file relative to this middleware file's location
   const serviceAccount = JSON.parse(
-    readFileSync(join(__dirname, '../../../serviceAccountKey.json'), 'utf8')
+    readFileSync(join(__dirname, '../../serviceAccountKey.json'), 'utf8')
   )
 
   admin.initializeApp({
