@@ -1,0 +1,204 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── CSS Custom Properties ── */
+:root {
+  --bg: #0d0f1a;
+  --card: #161927;
+  --card2: #1e2235;
+  --accent: #f7c948;
+  --accent2: #ff6b6b;
+  --green: #43e97b;
+  --blue: #38b2f5;
+  --purple: #a78bfa;
+  --orange: #fb923c;
+  --text: #e8eaf0;
+  --muted: #7a7f9a;
+  --border: #2a2f48;
+  --radius: 18px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Hind Siliguri', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    radial-gradient(1px 1px at 10% 20%, rgba(247,201,72,.25) 0%, transparent 100%),
+    radial-gradient(1px 1px at 75% 15%, rgba(56,178,245,.2) 0%, transparent 100%),
+    radial-gradient(1px 1px at 30% 80%, rgba(167,139,250,.15) 0%, transparent 100%),
+    radial-gradient(1px 1px at 85% 70%, rgba(67,233,123,.15) 0%, transparent 100%);
+}
+
+/* ── Gradient text utility ── */
+.gradient-text-accent {
+  background: linear-gradient(135deg, var(--accent), #ff9f43);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-blue {
+  background: linear-gradient(135deg, var(--blue), var(--purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-green {
+  background: linear-gradient(135deg, var(--green), #38b2f5);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Custom scrollbar ── */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ── Floating bg symbols ── */
+@keyframes floatSym {
+  0%,100% { transform: translateY(0) rotate(0deg); }
+  33%     { transform: translateY(-12px) rotate(5deg); }
+  66%     { transform: translateY(8px) rotate(-3deg); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulseWarn {
+  0%,100% { opacity: 1; }
+  50%     { opacity: 0.6; }
+}
+@keyframes nucPulse {
+  0%,100% { transform: translate(-50%,-50%) scale(1); }
+  50%     { transform: translate(-50%,-50%) scale(1.4); }
+}
+@keyframes spin1 { to { transform: rotate(360deg); } }
+@keyframes spin2 { to { transform: rotateX(60deg) rotateY(30deg) rotate(360deg); } }
+@keyframes spin3 { to { transform: rotateX(75deg) rotateY(60deg) rotate(-360deg); } }
+@keyframes pillFloat {
+  0%,100% { transform: translateY(0); }
+  50%     { transform: translateY(-4px); }
+}
+@keyframes liquidWave {
+  0%,100% { height: 55%; }
+  50%     { height: 62%; }
+}
+@keyframes bubbleRise {
+  0%   { transform: translateY(0); opacity: .8; }
+  100% { transform: translateY(-40px); opacity: 0; }
+}
+@keyframes dnaWave {
+  0%,100% { transform: translateX(0); }
+  50%     { transform: translateX(10px); }
+}
+@keyframes cardFloat {
+  0%,100% { transform: translateY(0); }
+  30%     { transform: translateY(-9px); }
+  70%     { transform: translateY(6px); }
+}
+@keyframes cardFloatCenter {
+  0%,100% { transform: translateX(-50%) translateY(0); }
+  30%     { transform: translateX(-50%) translateY(-9px); }
+  70%     { transform: translateX(-50%) translateY(6px); }
+}
+
+/* ── Screen animation ── */
+.screen-animate { animation: fadeIn 0.4s ease; }
+
+/* ── Toggle switch ── */
+.switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; inset: 0; background: var(--border); border-radius: 24px; transition: .3s; }
+.slider::before { content: ''; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: .3s; }
+input:checked + .slider { background: var(--accent); }
+input:checked + .slider::before { transform: translateX(20px); }
+
+/* ── Code input boxes (sync modal) ── */
+.code-box {
+  width: 44px; height: 54px; text-align: center;
+  font-family: 'Baloo Da 2', cursive; font-size: 1.6rem; font-weight: 800;
+  background: var(--card2); border: 2px solid var(--border);
+  border-radius: 10px; color: var(--accent); outline: none;
+  transition: border-color .2s, box-shadow .2s;
+}
+.code-box:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(247,201,72,.2); }
+
+/* ── Word link ── */
+.wl-linked {
+  color: var(--blue); text-decoration: underline dotted; cursor: pointer;
+  border-radius: 3px; padding: 0 1px; transition: background .15s; position: relative;
+}
+.wl-linked:hover { background: rgba(56,178,245,.15); }
+.q-linked-word { color: var(--blue); text-decoration: underline dotted; cursor: pointer; border-radius: 3px; padding: 0 2px; transition: background .15s; }
+.q-linked-word:hover { background: rgba(56,178,245,.18); text-decoration: underline; }
+
+/* ── Tag chip ── */
+.tag-chip {
+  display: flex; align-items: center; gap: 3px;
+  background: rgba(167,139,250,.15); border: 1px solid rgba(167,139,250,.35);
+  color: var(--purple); border-radius: 20px; padding: 2px 8px;
+  font-size: .78rem; white-space: nowrap;
+}
+
+/* ── Import drop zone ── */
+.import-drop {
+  border: 2px dashed var(--border); border-radius: 12px; padding: 22px;
+  text-align: center; cursor: pointer; transition: all .2s; background: var(--card2);
+}
+.import-drop:hover, .import-drop.dragover { border-color: var(--accent); background: rgba(247,201,72,.06); }
+
+/* ── Math card floating ── */
+.math-card {
+  position: absolute; background: rgba(13,15,26,.75); backdrop-filter: blur(8px);
+  border-radius: 12px; padding: 9px 14px; pointer-events: none; user-select: none;
+}
+.mc1 { top: 8%; left: 1%; border: 1px solid rgba(255,107,107,.3); color: rgba(255,107,107,.9); animation: cardFloat 7s ease-in-out infinite; }
+.mc2 { bottom: 28%; left: 1%; border: 1px solid rgba(167,139,250,.3); color: rgba(167,139,250,.9); animation: cardFloat 7s ease-in-out 1.4s infinite; }
+.mc3 { top: 5%; right: 1%; border: 1px solid rgba(247,201,72,.35); color: rgba(247,201,72,.95); animation: cardFloat 7s ease-in-out 2.2s infinite; }
+.mc4 { bottom: 32%; right: 1%; border: 1px solid rgba(247,201,72,.28); color: rgba(247,201,72,.85); animation: cardFloat 7s ease-in-out 0.8s infinite; }
+.mc5 { bottom: 8%; left: 50%; border: 1px solid rgba(67,233,123,.28); color: rgba(67,233,123,.85); animation: cardFloatCenter 7s ease-in-out 3s infinite; }
+
+/* ── DNA helix ── */
+.dna-pair { position: relative; width: 60px; height: 10px; }
+.dna-pair::before, .dna-pair::after { content: ''; position: absolute; width: 9px; height: 9px; border-radius: 50%; top: 0; }
+.dna-pair::before { left: 0; background: var(--blue); }
+.dna-pair::after  { right: 0; background: var(--green); }
+
+/* ── Atom ── */
+.atom { position: absolute; pointer-events: none; }
+.nucleus { position: absolute; top: 50%; left: 50%; width: 14px; height: 14px; border-radius: 50%; background: var(--blue); box-shadow: 0 0 12px var(--blue); animation: nucPulse 2s ease-in-out infinite; transform: translate(-50%,-50%); }
+.orbit { position: absolute; inset: 0; border-radius: 50%; border: 1px solid rgba(56,178,245,.35); }
+.o1 { animation: spin1 4s linear infinite; }
+.o2 { transform: rotateX(60deg) rotateY(30deg); animation: spin2 6s linear infinite; }
+.o3 { transform: rotateX(75deg) rotateY(60deg); animation: spin3 8s linear infinite; }
+.electron { position: absolute; top: -4px; left: 50%; width: 8px; height: 8px; border-radius: 50%; background: var(--blue); box-shadow: 0 0 6px var(--blue); transform: translateX(-50%); }
+.e2 { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.e3 { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+
+/* ── Beaker ── */
+.qsr-bk-liquid { position: absolute; bottom: 0; left: 0; right: 0; height: 55%; background: rgba(67,233,123,.2); border-radius: 0 0 10px 10px; animation: liquidWave 3s ease-in-out infinite; }
+.qsr-bubble { position: absolute; border-radius: 50%; background: rgba(67,233,123,.4); }
+.b1 { width: 5px; height: 5px; left: 25%; bottom: 5%; animation: bubbleRise 3s ease-in-out infinite; }
+.b2 { width: 4px; height: 4px; left: 55%; bottom: 15%; animation: bubbleRise 3s ease-in-out 1s infinite; }
+.b3 { width: 6px; height: 6px; left: 40%; bottom: 10%; animation: bubbleRise 3s ease-in-out 2s infinite; }
+
+/* ── Toast ── */
+.toast-enter { transform: translateX(-50%) translateY(0); }
+.toast-exit  { transform: translateX(-50%) translateY(80px); }
+
+/* ── Step tracker ── */
+.step-line-done { background: linear-gradient(90deg, var(--green), var(--blue)) !important; }
