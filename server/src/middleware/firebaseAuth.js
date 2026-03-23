@@ -12,15 +12,21 @@
  *   requireAdmin — only users whose Firestore/custom claim role === 'admin'
  */
 import admin from 'firebase-admin'
+import { readFileSync } from 'fs'
+import { fileURLToPath } from 'url'
+import { dirname, join } from 'path'
 
-// ── Initialise Firebase Admin SDK (once) ─────────────────────────────────────
-// serviceAccountKey.json is downloaded from Firebase Console
-// → Project Settings → Service accounts → Generate new private key
+const __filename = fileURLToPath(import.meta.url)
+const __dirname  = dirname(__filename)
+
 if (!admin.apps.length) {
+  // Read the file relative to this middleware file's location
+  const serviceAccount = JSON.parse(
+    readFileSync(join(__dirname, '../../serviceAccountKey.json'), 'utf8')
+  )
+
   admin.initializeApp({
-    credential: admin.credential.cert(
-      JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON)
-    ),
+    credential: admin.credential.cert(serviceAccount),
   })
 }
 
