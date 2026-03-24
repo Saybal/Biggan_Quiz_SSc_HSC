@@ -1,15 +1,15 @@
 import 'dotenv/config'
 import express     from 'express'
 import cors        from 'cors'
-import { connectDB }    from './config/db.js'
-import authRoutes       from './routes/authRoutes.js'
-import publicRoutes     from './routes/publicRoutes.js'
-import adminRoutes      from './routes/adminRoutes.js'
-import { errorHandler } from './middleware/errorHandler.js'
-import Settings         from './models/Settings.js'
-import Subject          from './models/Subject.js'
-import Level            from './models/Level.js'
-import Question         from './models/Question.js'
+import { connectDB }    from '../src/config/db.js'
+import authRoutes       from '../src/routes/authRoutes.js'
+import publicRoutes     from '../src/routes/publicRoutes.js'
+import adminRoutes      from '../src/routes/adminRoutes.js'
+import { errorHandler } from '../src/middleware/errorHandler.js'
+import Settings         from '../src/models/Settings.js'
+import Subject          from '../src/models/Subject.js'
+import Level            from '../src/models/Level.js'
+import Question         from '../src/models/Question.js'
 
 
 const app  = express()
@@ -71,10 +71,26 @@ async function seed() {
 }
 
 // ── Start ─────────────────────────────────────────────────────────────────────
-async function start() {
-  await connectDB()
-  await seed()
-  app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`))
+// async function start() {
+//   await connectDB()
+//   await seed()
+//   app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`))
+// }
+
+// start().catch(err => { console.error('Fatal:', err); process.exit(1) })
+
+let isConnected = false
+
+async function init() {
+  if (!isConnected) {
+    await connectDB()
+    await seed()
+    isConnected = true
+    console.log("✅ DB connected & seeded")
+  }
 }
 
-start().catch(err => { console.error('Fatal:', err); process.exit(1) })
+export default async function handler(req, res) {
+  await init()
+  return app(req, res)
+}
