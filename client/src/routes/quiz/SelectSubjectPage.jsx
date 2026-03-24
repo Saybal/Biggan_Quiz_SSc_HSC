@@ -12,7 +12,7 @@ export default function SelectSubjectPage() {
   const handleNext = () => {
     if (!selSubjectId) { setError('⚠️ একটি বিষয় বেছে নাও!'); return }
     sessionStorage.setItem('qs_subjectId', selSubjectId)
-    navigate('/quiz/select-level')
+    navigate('/quiz/exams')
   }
 
   return (

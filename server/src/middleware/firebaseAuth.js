@@ -12,6 +12,7 @@
  *   requireAdmin — only users whose Firestore/custom claim role === 'admin'
  */
 import admin from 'firebase-admin'
+import User from '../models/User.js'
 import { readFileSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
@@ -47,7 +48,27 @@ async function verifyToken(req) {
 // ── requireAuth: any verified Firebase user ───────────────────────────────────
 export async function requireAuth(req, res, next) {
   try {
-    req.user = await verifyToken(req)
+    const decoded = await verifyToken(req)
+    req.user = decoded
+
+    // Keep a MongoDB mirror of Firebase users for features like email reminders.
+    // This is best-effort and must not block requests.
+    try {
+      const role = decoded.role || 'user'
+      await User.findOneAndUpdate(
+        { firebaseUid: decoded.uid },
+        {
+          firebaseUid: decoded.uid,
+          email: decoded.email,
+          displayName: decoded.name || '',
+          emailVerified: decoded.email_verified || false,
+          role,
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      )
+    } catch {
+      // ignore mongo errors for auth flow
+    }
     next()
   } catch (err) {
     res.status(err.status || 401).json({ error: err.message || 'Unauthorized' })
@@ -64,6 +85,24 @@ export async function requireAdmin(req, res, next) {
       return res.status(403).json({ error: 'Admin access required' })
     }
     req.user = decoded
+
+    // Same best-effort upsert for admin users.
+    try {
+      await User.findOneAndUpdate(
+        { firebaseUid: decoded.uid },
+        {
+          firebaseUid: decoded.uid,
+          email: decoded.email,
+          displayName: decoded.name || '',
+          emailVerified: decoded.email_verified || false,
+          role: 'admin',
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      )
+    } catch {
+      // ignore
+    }
+
     next()
   } catch (err) {
     res.status(err.status || 401).json({ error: err.message || 'Unauthorized' })

@@ -7,6 +7,7 @@ import * as questions    from '../controllers/questionController.js'
 import * as results      from '../controllers/resultController.js'
 import * as settings     from '../controllers/settingsController.js'
 import { parsePdf }      from '../controllers/pdfController.js'
+import * as exams        from '../controllers/examController.js'
 
 
 // multer: store PDF in memory (no disk write, max 10 MB)
@@ -47,5 +48,8 @@ router.patch('/settings',          settings.update)
 
 // ── PDF → Quiz ────────────────────────────────────────────────────────────────
 router.post ('/pdf/parse', upload.single('pdf'), parsePdf)
+
+// ── Exams (admin creates exam + stores its questions) ─────────────────────────
+router.post('/exams', exams.create)
 
 export default router

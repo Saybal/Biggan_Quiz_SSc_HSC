@@ -55,80 +55,127 @@ export async function parsePdfToQuestions(pdfBuffer) {
     )
   }
 
-  // Truncate to safe token limit for llama-3.1-70b (context: 131k tokens)
-  const truncated = rawText.slice(0, 15000)
-
-  // ── Step 2: Call Groq API ─────────────────────────────────────────────────
-  const response = await fetch(GROQ_API_URL, {
-    method:  'POST',
-    headers: {
-      'Content-Type':  'application/json',
-      'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: 'llama-3.1-8b-instant',
-      temperature: 0.1,
-      max_tokens:  4096,
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user',   content: `Extract all MCQ questions from this text:\n\n${truncated}` },
-      ],
-      // Groq supports response_format for JSON mode
-      response_format: { type: 'json_object' },
-    }),
-  })
-
-  if (!response.ok) {
-    const errBody = await response.text()
-    throw Object.assign(
-      new Error(`Groq API error ${response.status}: ${errBody}`),
-      { status: 502 }
-    )
+  function splitIntoChunks(text, { chunkSize = 12000, overlap = 900 } = {}) {
+    const clean = text.replace(/\r\n/g, '\n')
+    const chunks = []
+    let start = 0
+    while (start < clean.length) {
+      const end = Math.min(clean.length, start + chunkSize)
+      chunks.push(clean.slice(start, end))
+      start = end - overlap
+      if (start < 0) start = 0
+      if (end === clean.length) break
+    }
+    return chunks
   }
 
-  const data    = await response.json()
-  const content = data.choices?.[0]?.message?.content || '{}'
-
-  // ── Step 3: Parse and validate ────────────────────────────────────────────
-  let raw
-  try {
-    const parsed2 = JSON.parse(content)
-    // Model might return { questions: [...] } or just [...]
-    raw = Array.isArray(parsed2)
-      ? parsed2
-      : (parsed2.questions || parsed2.data || parsed2.mcqs || Object.values(parsed2)[0] || [])
-  } catch {
-    throw Object.assign(
-      new Error('AI returned invalid JSON. Please try again.'),
-      { status: 500 }
-    )
+  function parseAIResponse(content) {
+    try {
+      const parsed2 = JSON.parse(content)
+      // Model might return { questions: [...] } or just [...]
+      return Array.isArray(parsed2)
+        ? parsed2
+        : (parsed2.questions || parsed2.data || parsed2.mcqs || Object.values(parsed2)[0] || [])
+    } catch {
+      return []
+    }
   }
 
-  if (!Array.isArray(raw)) raw = []
+  function normalizeOptionList(opts) {
+    const arr = Array.isArray(opts) ? opts.map(o => String(o).trim()).filter(Boolean) : []
+    if (arr.length >= 4) return arr.slice(0, 4)
+    // Pad to exactly 4 so the UI/backend always expects 4 options.
+    const filler = ['(উত্তর)', '(ভুল)', '(ভুল_২)', '(ভুল_৩)']
+    const next = arr.slice()
+    while (next.length < 4) next.push(filler[next.length] || '...')
+    return next
+  }
 
-  const questions = raw
-    .filter(item =>
-      item.q &&
-      Array.isArray(item.opts) &&
-      item.opts.length >= 2 &&
-      item.ans !== undefined
-    )
-    .map(item => ({
-      q:           String(item.q).trim(),
-      opts:        item.opts.slice(0, 4).map(o => String(o).trim()),
-      ans:         Math.min(3, Math.max(0, parseInt(item.ans) || 0)),
-      marks:       parseInt(item.marks) || 1,
+  function parseAnswerIndex(ans) {
+    if (ans === null || ans === undefined) return 0
+    const n = typeof ans === 'number' ? ans : parseInt(String(ans).trim(), 10)
+    if (!Number.isNaN(n)) return Math.min(3, Math.max(0, n))
+    const s = String(ans).trim().toUpperCase()
+    const map = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 }
+    if (map[s] !== undefined) return map[s]
+    return 0
+  }
+
+  // ── Step 2: Extract in chunks (no truncation) ─────────────────────────────
+  const chunks = splitIntoChunks(rawText, { chunkSize: 12000, overlap: 900 })
+  const allRaw = []
+
+  for (let i = 0; i < chunks.length; i++) {
+    const chunkText = chunks[i]
+
+    const response = await fetch(GROQ_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-8b-instant',
+        temperature: 0.1,
+        max_tokens:  4096,
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: `Extract ALL multiple-choice questions from this chunk of PDF text. Return ONLY a JSON array.\n\nCHUNK ${i + 1}/${chunks.length}:\n${chunkText}` },
+        ],
+        response_format: { type: 'json_object' },
+      }),
+    })
+
+    if (!response.ok) {
+      const errBody = await response.text()
+      throw Object.assign(
+        new Error(`Groq API error ${response.status}: ${errBody}`),
+        { status: 502 }
+      )
+    }
+
+    const data = await response.json()
+    const content = data.choices?.[0]?.message?.content || '{}'
+    allRaw.push(...parseAIResponse(content))
+  }
+
+  // ── Step 3: Validate + de-duplicate + normalize ────────────────────────────
+  const normalized = []
+  const seen = new Set()
+
+  for (const item of allRaw) {
+    if (!item?.q) continue
+    if (!Array.isArray(item.opts)) continue
+    if (item.ans === undefined) continue
+
+    const q = String(item.q).replace(/\s+/g, ' ').trim()
+    if (!q) continue
+
+    const opts = normalizeOptionList(item.opts)
+    const ans = parseAnswerIndex(item.ans)
+    const marks = parseInt(item.marks, 10)
+
+    const key = `${q}__${opts.join('|')}__${ans}`
+    if (seen.has(key)) continue
+    seen.add(key)
+
+    normalized.push({
+      q,
+      opts,
+      ans,
+      marks: Number.isNaN(marks) ? 1 : Math.min(20, Math.max(1, marks)),
       context:     String(item.context     || '').trim(),
       explanation: String(item.explanation || '').trim(),
       tags:        Array.isArray(item.tags) ? item.tags.map(String) : [],
-    }))
+    })
+  }
 
-  if (questions.length === 0) {
+  if (normalized.length === 0) {
     throw Object.assign(
       new Error('No valid MCQ questions found in this PDF.'),
       { status: 422 }
     )
   }
 
-  return questions
+  return normalized
 }

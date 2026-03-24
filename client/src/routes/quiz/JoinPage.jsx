@@ -3,25 +3,83 @@ import { Link, useNavigate } from 'react-router'
 import { useQuiz } from '../../context/QuizContext.jsx'
 import SelBg from '../../components/layout/SelBg.jsx'
 import StepTracker from '../../components/shared/StepTracker.jsx'
+import { examsAPI } from '../../api/index.js'
 
 export default function JoinPage() {
   const navigate = useNavigate()
-  const { subjects, levels, questions, quizOptions, timerMin, selSubjectId, selLevelId, setQuizSession } = useQuiz()
+  const {
+    subjects,
+    levels,
+    questions,
+    quizOptions,
+    timerMin,
+    selSubjectId,
+    selLevelId,
+    setSelSubjectId,
+    setSelLevelId,
+    setQuizSession,
+    showToast,
+  } = useQuiz()
+
   const [name, setName]     = useState('')
   const [school, setSchool] = useState('')
   const [error, setError]   = useState('')
 
+  const examId = sessionStorage.getItem('qs_examId')
+  const [examLoading, setExamLoading] = useState(Boolean(examId))
+  const [exam, setExam] = useState(null)
+  const [examQuestions, setExamQuestions] = useState([])
+  const [examErr, setExamErr] = useState('')
+
   const subject = subjects.find(s => s._id === selSubjectId)
   const level   = levels.find(l => l._id === selLevelId)
-  const qCount  = questions.filter(q => q.subjectId === selSubjectId && q.levelId === selLevelId).length
+  const qCount  = examId
+    ? examQuestions.length
+    : questions.filter(q => q.subjectId === selSubjectId && q.levelId === selLevelId).length
   const mins    = timerMin || 30
+
+  React.useEffect(() => {
+    let alive = true
+    async function loadExam() {
+      if (!examId) return
+      setExamLoading(true)
+      setExamErr('')
+      try {
+        const [eRes, qRes] = await Promise.all([
+          examsAPI.getExam(examId),
+          examsAPI.getQuestions(examId),
+        ])
+        if (!alive) return
+        setExam(eRes.data)
+        setExamQuestions(qRes.data)
+
+        // Set subject+level for Result rendering and any legacy UI bits.
+        const subj = eRes.data?.subjectId?._id ? eRes.data.subjectId : null
+        const lvl = eRes.data?.levelId?._id ? eRes.data.levelId : null
+        if (subj) setSelSubjectId(subj._id)
+        if (lvl) setSelLevelId(lvl._id)
+      } catch (err) {
+        if (!alive) return
+        setExamErr(err.response?.data?.error || 'Exam লোড হয়নি')
+      } finally {
+        if (!alive) return
+        setExamLoading(false)
+      }
+    }
+    loadExam()
+    return () => { alive = false }
+  }, [examId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleStart = () => {
     if (!name.trim())   { setError('⚠️ নাম লিখতে ভুলে গেছো!'); return }
     if (!school.trim()) { setError('⚠️ স্কুল/কলেজের নাম লিখো!'); return }
 
     const totalSeconds = mins * 60
-    let qs = questions.filter(q => q.subjectId === selSubjectId && q.levelId === selLevelId)
+
+    let qs = examId
+      ? examQuestions
+      : questions.filter(q => q.subjectId === selSubjectId && q.levelId === selLevelId)
+
     if (quizOptions.randomQ) qs = [...qs].sort(() => Math.random() - .5)
 
     const quizQs = qs.map(q => {
@@ -34,7 +92,17 @@ export default function JoinPage() {
       return { ...q, opts, ans, _selected: undefined }
     })
 
-    setQuizSession({ player: name.trim(), school: school.trim(), questions: quizQs, currentQ: 0, score: 0, totalSeconds, startedAt: Date.now() })
+    setQuizSession({
+      mode: examId ? 'exam' : 'standard',
+      examId: examId || null,
+      subjectId: selSubjectId || null,
+      levelId: selLevelId || null,
+      player: name.trim(),
+      school: school.trim(),
+      questions: quizQs,
+      totalSeconds,
+      startedAt: Date.now(),
+    })
     sessionStorage.setItem('qs_session', 'true')
     sessionStorage.removeItem('qs_result')
     navigate('/quiz/play')
@@ -49,7 +117,10 @@ export default function JoinPage() {
         <div className="text-center mb-5">
           <div className="text-[2.6rem] mb-1.5">🚀</div>
           <h2 className="font-display font-extrabold text-[2rem] text-textprimary mb-1">প্রস্তুত?</h2>
-          <p className="text-muted text-[.9rem]">{subject?.emoji} {subject?.name} · {level?.name} · {qCount} প্রশ্ন</p>
+          <p className="text-muted text-[.9rem]">
+            {exam ? `📌 ${exam.examName}` : `${subject?.emoji} ${subject?.name} · ${level?.name}`}
+            {' '}· {qCount} প্রশ্ন
+          </p>
         </div>
 
         {/* Countdown ring */}
@@ -88,7 +159,10 @@ export default function JoinPage() {
               onKeyDown={e => e.key === 'Enter' && handleStart()}/>
           </div>
 
-          <button onClick={handleStart} className="w-full flex items-center gap-3.5 rounded-[14px] px-4 py-3.5 text-left transition-all hover:-translate-y-0.5"
+          <button
+            onClick={handleStart}
+            disabled={examLoading || (examId ? examQuestions.length === 0 : false)}
+            className="w-full flex items-center gap-3.5 rounded-[14px] px-4 py-3.5 text-left transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed"
             style={{ background:'linear-gradient(135deg,#0e1f15,#0a1a28)', border:'1.5px solid rgba(67,233,123,.5)', boxShadow:'0 4px 22px rgba(67,233,123,.14)' }}>
             <span className="text-[2rem] flex-shrink-0" style={{ filter:'drop-shadow(0 0 8px rgba(67,233,123,.5))' }}>🚀</span>
             <span className="flex-1">
@@ -98,6 +172,8 @@ export default function JoinPage() {
             <span className="text-green opacity-70 text-xl font-bold">→</span>
           </button>
           {error && <p className="text-accent2 text-xs mt-3 text-center">{error}</p>}
+          {examErr && <p className="text-accent2 text-xs mt-3 text-center">{examErr}</p>}
+          {examLoading && <p className="text-muted text-xs mt-3 text-center">Exam লোড হচ্ছে...</p>}
         </div>
 
         <Link to="/quiz/select-level" className="w-full py-2.5 bg-transparent border border-border text-muted font-display font-semibold rounded-xl text-sm text-center block transition hover:border-accent hover:text-accent">

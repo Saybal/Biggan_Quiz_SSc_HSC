@@ -10,8 +10,15 @@
 import axios from 'axios'
 import { auth } from '../config/firebase.js'
 
+function normalizeApiBase(rawBase) {
+  const base = String(rawBase || '').trim().replace(/\/$/, '')
+  if (!base) return '/api'
+  // Server routes are mounted under `/api` in Express.
+  return base.endsWith('/api') ? base : `${base}/api`
+}
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: normalizeApiBase(import.meta.env.VITE_API_URL),
   headers: { 'Content-Type': 'application/json' },
   timeout: 60000,  // 60s — PDF parsing can be slow
 })

@@ -6,7 +6,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useQuiz } from '../../context/QuizContext.jsx'
-import { subjectsAPI, levelsAPI, questionsAPI, resultsAPI, settingsAPI, pdfAPI } from '../../api/index.js'
+import { subjectsAPI, levelsAPI, questionsAPI, resultsAPI, settingsAPI, pdfAPI, adminExamsAPI } from '../../api/index.js'
 
 // ── Shared UI micro-components ────────────────────────────────────────────────
 const EMOJIS = ['🧮','📐','🔬','⚗️','🧪','🌍','📖','🖊️','🧬','💡','🔭','📊','🏛️','🌿','🩺','💻','🎨','🎵','⚽','🌏','🧑‍🔬','📝','🔢','🏫','🎓']
@@ -420,6 +420,8 @@ function PdfTab() {
   const [file,       setFile]       = useState(null)
   const [subjId,     setSubjId]     = useState('')
   const [lvlId,      setLvlId]      = useState('')
+  const [examName,   setExamName]   = useState('')
+  const [publishDate,setPublishDate]= useState('')
   const [parsing,    setParsing]    = useState(false)
   const [parsed,     setParsed]     = useState(null)   // extracted questions
   const [saving,     setSaving]     = useState(false)
@@ -434,6 +436,8 @@ function PdfTab() {
     if (!file)     { setParseErr('PDF ফাইল select করুন'); return }
     if (!subjId)   { setParseErr('বিষয় select করুন'); return }
     if (!lvlId)    { setParseErr('Level select করুন'); return }
+    if (!examName.trim()) { setParseErr('Exam Name লিখুন'); return }
+    if (!publishDate)     { setParseErr('Publishing Date select করুন'); return }
     setParsing(true); setParseErr(''); setParsed(null); setSaveMsg('')
     try {
       const res = await pdfAPI.parse(file)
@@ -458,8 +462,14 @@ function PdfTab() {
     if (!parsed?.length) return
     setSaving(true); setSaveMsg('')
     try {
-      const res = await questionsAPI.bulkCreate(subjId, lvlId, parsed)
-      setSaveMsg(`✅ ${res.data.inserted}টি প্রশ্ন MongoDB-তে সংরক্ষিত হয়েছে!`)
+      const res = await adminExamsAPI.create({
+        subjectId: subjId,
+        levelId: lvlId,
+        examName,
+        publishDate,
+        questions: parsed,
+      })
+      setSaveMsg(`✅ "${examName}" exam-এর জন্য ${res.data.inserted}টি প্রশ্ন সংরক্ষিত হয়েছে!`)
       showToast(`✅ ${res.data.inserted}টি import হয়েছে!`, 'correct-t')
       setParsed(null); setFile(null)
     } catch (err) {
@@ -498,6 +508,25 @@ function PdfTab() {
               {levels.map(l=><option key={l._id} value={l._id}>{l.name}</option>)}
             </Sel>
           </div>
+          <div className="col-span-2 sm:col-span-1">
+            <label className="block text-muted text-xs mb-1">Exam Name *</label>
+            <input
+              value={examName}
+              onChange={e => setExamName(e.target.value)}
+              placeholder="যেমন: গণিত SSC Model Test-1"
+              className="w-full bg-card2 border-[1.5px] border-border rounded-xl px-3.5 py-2.5 text-textprimary font-body text-sm outline-none transition focus:border-accent placeholder-muted"
+              maxLength={80}
+            />
+          </div>
+          <div className="col-span-2 sm:col-span-1">
+            <label className="block text-muted text-xs mb-1">Publishing Date *</label>
+            <input
+              type="date"
+              value={publishDate}
+              onChange={e => setPublishDate(e.target.value)}
+              className="w-full bg-card2 border-[1.5px] border-border rounded-xl px-3.5 py-2.5 text-textprimary font-body text-sm outline-none transition focus:border-accent placeholder-muted"
+            />
+          </div>
         </div>
       </div>
 
@@ -532,7 +561,7 @@ function PdfTab() {
           )}
         </div>
 
-        <button onClick={handleParse} disabled={parsing||!file||!subjId||!lvlId}
+        <button onClick={handleParse} disabled={parsing||!file||!subjId||!lvlId||!examName.trim()||!publishDate}
           className="mt-3 w-full py-3 rounded-xl font-display font-bold text-sm text-white transition hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ background:'linear-gradient(135deg,#38b2f5,var(--purple))' }}>
           {parsing ? (

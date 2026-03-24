@@ -2,6 +2,11 @@ import mongoose from 'mongoose'
 
 const QuestionSchema = new mongoose.Schema(
   {
+    // Exam linkage (new)
+    examId:      { type: mongoose.Schema.Types.ObjectId, ref: 'Exam', index: true },
+    examName:    { type: String, default: '' },
+    publishDate: { type: Date, index: true },
+
     subjectId:   { type: mongoose.Schema.Types.ObjectId, ref: 'Subject', required: true, index: true },
     levelId:     { type: mongoose.Schema.Types.ObjectId, ref: 'Level',   required: true, index: true },
     q:           { type: String, required: true },
@@ -19,5 +24,8 @@ const QuestionSchema = new mongoose.Schema(
 
 // Compound index for fast subject+level filtering
 QuestionSchema.index({ subjectId: 1, levelId: 1 })
+
+// Fast exam question retrieval
+QuestionSchema.index({ examId: 1, createdAt: 1 })
 
 export default mongoose.model('Question', QuestionSchema)

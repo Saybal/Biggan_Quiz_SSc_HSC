@@ -22,8 +22,9 @@ import RegisterPage      from '../routes/auth/RegisterPage.jsx'   // NEW
 import SelectSubjectPage from '../routes/quiz/SelectSubjectPage.jsx'
 import SelectLevelPage   from '../routes/quiz/SelectLevelPage.jsx'
 import JoinPage          from '../routes/quiz/JoinPage.jsx'
-import QuizPage          from '../routes/quiz/QuizPage.jsx'
 import ResultPage        from '../routes/quiz/ResultPage.jsx'
+import ExamsDashboardPage from '../routes/quiz/ExamsDashboardPage.jsx'
+import ExamPlayPage from '../routes/quiz/ExamPlayPage.jsx'
 import AdminLoginPage    from '../routes/admin/AdminLoginPage.jsx'
 import AdminPage         from '../routes/admin/AdminPage.jsx'
 import NotFoundPage      from '../routes/NotFoundPage.jsx'
@@ -34,12 +35,18 @@ function quizFlowLoader({ request }) {
   const { pathname } = new URL(request.url)
   const hasSubject = Boolean(sessionStorage.getItem('qs_subjectId'))
   const hasLevel   = Boolean(sessionStorage.getItem('qs_levelId'))
+  const hasExam    = Boolean(sessionStorage.getItem('qs_examId'))
   const hasSession = Boolean(sessionStorage.getItem('qs_session'))
   const hasResult  = Boolean(sessionStorage.getItem('qs_result'))
   if (pathname === '/quiz/select-level' && !hasSubject)          return redirect('/quiz/select-subject')
-  if (pathname === '/quiz/join' && (!hasSubject || !hasLevel))   return redirect(hasSubject ? '/quiz/select-level' : '/quiz/select-subject')
+  if (pathname === '/quiz/join' && !hasSubject)                  return redirect('/quiz/select-subject')
   if (pathname === '/quiz/play'   && !hasSession)                return redirect('/quiz/join')
   if (pathname === '/quiz/result' && !hasResult)                 return redirect('/')
+  if (pathname === '/quiz/exams' && !hasSubject)                return redirect('/quiz/select-subject')
+  // Exam play uses `/quiz/join` as the “join/start exam” step, so require examId.
+  if (pathname === '/quiz/join' && hasSubject && !hasLevel && !hasExam) {
+    return redirect('/quiz/exams')
+  }
   return null
 }
 
@@ -90,9 +97,10 @@ const router = createBrowserRouter([
         children: [
           { index: true,          loader: () => redirect('/quiz/select-subject') },
           { path: 'select-subject', element: <SelectSubjectPage /> },
+          { path: 'exams',          element: <ExamsDashboardPage />, loader: quizFlowLoader },
           { path: 'select-level',   element: <SelectLevelPage />,  loader: quizFlowLoader },
           { path: 'join',           element: <JoinPage />,         loader: quizFlowLoader },
-          { path: 'play',           element: <QuizPage />,         loader: quizFlowLoader },
+          { path: 'play',           element: <ExamPlayPage />,    loader: quizFlowLoader },
           { path: 'result',         element: <ResultPage />,       loader: quizFlowLoader },
         ],
       },

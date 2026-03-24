@@ -61,6 +61,22 @@ export const settingsAPI = {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// EXAMS (student + admin)
+// ═══════════════════════════════════════════════════════════════
+export const examsAPI = {
+  // Student list: GET /api/exams?subjectId=
+  list:     (params)   => api.get('/exams', { params }),
+  getExam:  (examId)   => api.get(`/exams/${examId}`),
+  // Teacher/admin question fetch: GET /api/exams/:examId/questions
+  getQuestions: (examId) => api.get(`/exams/${examId}/questions`),
+
+  // Auth required:
+  submitAttempt: (data) => api.post('/exams/attempts', data),
+  myExamMerit:   (examId) => api.get(`/exams/${examId}/merit`),
+  overallMerit:  ()       => api.get('/merit/overall'),
+}
+
+// ═══════════════════════════════════════════════════════════════
 // PDF PARSE  [admin]
 // ═══════════════════════════════════════════════════════════════
 export const pdfAPI = {
@@ -76,4 +92,9 @@ export const pdfAPI = {
       timeout:  60000,  // PDF + AI can be slow
     })
   },
+}
+
+// Admin: create exam + store its questions
+export const adminExamsAPI = {
+  create: (data) => api.post('/admin/exams', data),
 }

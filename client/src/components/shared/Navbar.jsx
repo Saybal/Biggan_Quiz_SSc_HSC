@@ -16,12 +16,12 @@ import { useQuiz } from '../../context/QuizContext.jsx'
 
 const HIDDEN_ROUTES  = ['/quiz/play']
 const MINIMAL_ROUTES = ['/quiz/result']
-const QUIZ_FLOW_PATHS = ['/quiz/select-subject', '/quiz/select-level', '/quiz/join']
+const QUIZ_FLOW_PATHS = ['/quiz/select-subject', '/quiz/exams', '/quiz/join']
 
 const QUIZ_STEPS = [
   { path: '/quiz/select-subject', label: 'বিষয়',    icon: '📚' },
-  { path: '/quiz/select-level',   label: 'Standard', icon: '🏫' },
-  { path: '/quiz/join',           label: 'শুরু',     icon: '🚀' },
+  { path: '/quiz/exams',          label: 'Exams',     icon: '📅' },
+  { path: '/quiz/join',           label: 'শুরু',      icon: '🚀' },
 ]
 
 function useScrolled(threshold = 12) {
@@ -70,7 +70,6 @@ function NavItem({ to, icon, label, end = false }) {
 function QuizBreadcrumb({ location, subjects, levels, selSubjectId, selLevelId }) {
   const currentIdx = QUIZ_STEPS.findIndex(s => s.path === location.pathname)
   const subject    = subjects.find(s => s._id === selSubjectId)
-  const level      = levels.find(l => l._id === selLevelId)
 
   return (
     <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
@@ -78,7 +77,7 @@ function QuizBreadcrumb({ location, subjects, levels, selSubjectId, selLevelId }
         const isDone = i < currentIdx, isActive = i === currentIdx
         let label = step.label
         if (isDone && i === 0 && subject) label = subject.name
-        if (isDone && i === 1 && level)   label = level.short || level.name
+        // Step 2 is the Exams dashboard (publishDate-based), so we don't show Level here.
 
         return (
           <React.Fragment key={step.path}>

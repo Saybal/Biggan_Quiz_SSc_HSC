@@ -4,6 +4,7 @@ import Question from '../models/Question.js'
 export async function getAll(req, res, next) {
   try {
     const filter = {}
+    if (req.query.examId) filter.examId = req.query.examId
     if (req.query.subjectId) filter.subjectId = req.query.subjectId
     if (req.query.levelId)   filter.levelId   = req.query.levelId
 

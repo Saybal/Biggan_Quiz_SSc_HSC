@@ -19,7 +19,7 @@ export default function ResultPage() {
 
   if (!lastResult) { navigate('/', { replace: true }); return null }
 
-  const { entry, questions, myRank, totalInRanked, showExplanation } = lastResult
+  const { entry, questions, myRank, totalInRanked, showExplanation, participatedOnTime } = lastResult
   const { score, fullMarks, pct, correct, wrong, skip, timeStr, name, school } = entry
   const subject = subjects.find(s => s._id === selSubjectId)
   const level   = levels.find(l => l._id === selLevelId)
@@ -30,7 +30,9 @@ export default function ResultPage() {
   else if (pct >= 50) { icon='👍'; msg='ভালো চেষ্টা! আরো পড়ো।' }
   else                { icon='📚'; msg='হতাশ হয়ো না, আবার চেষ্টা করো!' }
 
-  const rankDisplay = myRank===1?'🥇':myRank===2?'🥈':myRank===3?'🥉':`#${myRank}`
+  const rankDisplay = !participatedOnTime
+    ? '—'
+    : myRank===1?'🥇':myRank===2?'🥈':myRank===3?'🥉':`#${myRank}`
 
   return (
     <div className="flex flex-col items-center justify-start min-h-screen px-4 py-8 screen-animate" style={{ background:'var(--bg)' }}>
@@ -40,7 +42,9 @@ export default function ResultPage() {
         <div className="rounded-2xl px-5 py-4 text-center mb-3" style={{ background:'linear-gradient(135deg,rgba(247,201,72,.12),rgba(255,159,67,.08))', border:'2px solid rgba(247,201,72,.4)' }}>
           <div className="text-muted text-xs mb-1">🏆 তোমার Merit Position</div>
           <div className="font-display font-extrabold text-[3.2rem] gradient-text-accent leading-none">{rankDisplay}</div>
-          <div className="text-textprimary text-sm mt-1 font-medium">{totalInRanked} জনের মধ্যে {myRank} তম</div>
+          <div className="text-textprimary text-sm mt-1 font-medium">
+            {participatedOnTime ? `${totalInRanked} জনের মধ্যে ${myRank} তম` : 'এই পরীক্ষাটি on-time অংশগ্রহণের জন্য ছিল না'}
+          </div>
           <div className="text-muted text-xs mt-0.5">{subject?.emoji} {subject?.name} · {level?.name} · 🏛️ {school}</div>
         </div>
 
@@ -60,7 +64,7 @@ export default function ResultPage() {
           <div className="text-blue text-sm mb-1">⏱️ সময়: {timeStr}</div>
           <div className="text-textprimary text-[.97rem] my-2 font-medium">{msg}</div>
           <div className="flex gap-2 justify-center flex-wrap">
-            <Link to="/quiz/join" className="px-5 py-2.5 rounded-xl font-display font-bold text-[#1a1200] text-sm transition hover:-translate-y-0.5" style={{ background:'linear-gradient(135deg,var(--accent),#ff9f43)' }}>🔄 আবার খেলো</Link>
+            <Link to="/quiz/exams" className="px-5 py-2.5 rounded-xl font-display font-bold text-[#1a1200] text-sm transition hover:-translate-y-0.5" style={{ background:'linear-gradient(135deg,var(--accent),#ff9f43)' }}>🔄 আবার খেলো</Link>
             <Link to="/leaderboard" className="px-5 py-2.5 rounded-xl font-display font-bold text-white text-sm transition hover:-translate-y-0.5" style={{ background:'linear-gradient(135deg,var(--blue),#6c63ff)' }}>🏆 Merit List</Link>
             <Link to="/" className="px-5 py-2.5 rounded-xl font-display font-bold text-muted text-sm border border-border transition hover:border-accent hover:text-accent">← হোমে</Link>
           </div>
