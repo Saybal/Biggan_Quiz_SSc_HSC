@@ -128,3 +128,18 @@ export default async function handler(req, res) {
 
   return app(req, res)
 }
+
+// Local development mode (nodemon/node):
+// Vercel imports the default handler and does not need app.listen().
+if (process.env.VERCEL !== '1') {
+  init()
+    .then(() => {
+      app.listen(PORT, () => {
+        console.log(`🚀 Server running on http://localhost:${PORT}`)
+      })
+    })
+    .catch(err => {
+      console.error('Fatal startup error:', err)
+      process.exit(1)
+    })
+}
