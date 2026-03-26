@@ -28,11 +28,13 @@ export function QuizProvider({ children }) {
 
   const isAdminAuthed = role === 'admin'
 
+  // const t = settingsAPI.get()
+
   // ── Catalogue ─────────────────────────────────────────────────────────────
   const [subjects,  setSubjects]  = useState([])
   const [levels,    setLevels]    = useState([])
   const [questions, setQuestions] = useState([])
-  const [timerMin,     setTimerMin]     = useState(30)
+  const [timerMin,     setTimerMin]     = useState(10)
   const [quizOptions,  setQuizOptions]  = useState({ shuffle: false, showExplanation: true, randomQ: true })
   const [catalogueLoading, setCatalogueLoading] = useState(true)
   const [catalogueError,   setCatalogueError]   = useState(null)

@@ -8,6 +8,7 @@ import { examsAPI } from '../../api/index.js'
 export default function JoinPage() {
   const navigate = useNavigate()
   const {
+    user,
     subjects,
     levels,
     questions,
@@ -30,6 +31,7 @@ export default function JoinPage() {
   const [exam, setExam] = useState(null)
   const [examQuestions, setExamQuestions] = useState([])
   const [examErr, setExamErr] = useState('')
+  const [alreadyDone, setAlreadyDone] = useState(false)
 
   const subject = subjects.find(s => s._id === selSubjectId)
   const level   = levels.find(l => l._id === selLevelId)
@@ -52,12 +54,23 @@ export default function JoinPage() {
         if (!alive) return
         setExam(eRes.data)
         setExamQuestions(qRes.data)
+        setAlreadyDone(false)
 
         // Set subject+level for Result rendering and any legacy UI bits.
         const subj = eRes.data?.subjectId?._id ? eRes.data.subjectId : null
         const lvl = eRes.data?.levelId?._id ? eRes.data.levelId : null
         if (subj) setSelSubjectId(subj._id)
         if (lvl) setSelLevelId(lvl._id)
+
+        if (user) {
+          try {
+            const st = await examsAPI.attemptStatus(examId)
+            if (!alive) return
+            if (st.data?.attempted) setAlreadyDone(true)
+          } catch {
+            /* 401: guest — single-attempt still enforced on submit */
+          }
+        }
       } catch (err) {
         if (!alive) return
         setExamErr(err.response?.data?.error || 'Exam লোড হয়নি')
@@ -68,9 +81,13 @@ export default function JoinPage() {
     }
     loadExam()
     return () => { alive = false }
-  }, [examId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [examId, user]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleStart = () => {
+    if (examId && alreadyDone) {
+      setError('⚠️ তুমি ইতিমধ্যে এই পরীক্ষায় অংশ নিয়েছ')
+      return
+    }
     if (!name.trim())   { setError('⚠️ নাম লিখতে ভুলে গেছো!'); return }
     if (!school.trim()) { setError('⚠️ স্কুল/কলেজের নাম লিখো!'); return }
 
@@ -161,7 +178,7 @@ export default function JoinPage() {
 
           <button
             onClick={handleStart}
-            disabled={examLoading || (examId ? examQuestions.length === 0 : false)}
+            disabled={examLoading || (examId ? examQuestions.length === 0 : false) || (examId && alreadyDone)}
             className="w-full flex items-center gap-3.5 rounded-[14px] px-4 py-3.5 text-left transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed"
             style={{ background:'linear-gradient(135deg,#0e1f15,#0a1a28)', border:'1.5px solid rgba(67,233,123,.5)', boxShadow:'0 4px 22px rgba(67,233,123,.14)' }}>
             <span className="text-[2rem] flex-shrink-0" style={{ filter:'drop-shadow(0 0 8px rgba(67,233,123,.5))' }}>🚀</span>
@@ -173,6 +190,9 @@ export default function JoinPage() {
           </button>
           {error && <p className="text-accent2 text-xs mt-3 text-center">{error}</p>}
           {examErr && <p className="text-accent2 text-xs mt-3 text-center">{examErr}</p>}
+          {alreadyDone && !examErr && (
+            <p className="text-accent2 text-xs mt-3 text-center">এই পরীক্ষায় একবারই অংশগ্রহণ করা যায়। তুমি ইতিমধ্যে জমা দিয়েছ।</p>
+          )}
           {examLoading && <p className="text-muted text-xs mt-3 text-center">Exam লোড হচ্ছে...</p>}
         </div>
 

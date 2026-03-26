@@ -1,10 +1,30 @@
 import Exam from '../models/Exam.js'
 import Question from '../models/Question.js'
 import ExamAttempt from '../models/ExamAttempt.js'
+import { isExamPublished } from './examController.js'
 
 function dateKeyUTC(d) {
   const dt = d instanceof Date ? d : new Date(d)
-  return dt.toISOString().slice(0, 10) // UTC YYYY-MM-DD
+  return dt.toISOString().slice(0, 10)
+}
+
+export async function getAttemptStatus(req, res, next) {
+  try {
+    const { examId } = req.params
+    const exam = await Exam.findById(examId).lean()
+    if (!exam) return res.status(404).json({ error: 'Exam not found' })
+
+    const attempt = await ExamAttempt.findOne({ examId, firebaseUid: req.user.uid })
+      .sort({ submittedAt: -1 })
+      .select('score submittedAt participatedOnTime')
+      .lean()
+
+    res.json({
+      published: isExamPublished(exam),
+      attempted: Boolean(attempt),
+      attempt: attempt || null,
+    })
+  } catch (err) { next(err) }
 }
 
 export async function createAttempt(req, res, next) {
@@ -27,19 +47,41 @@ export async function createAttempt(req, res, next) {
     const exam = await Exam.findById(examId).lean()
     if (!exam) return res.status(404).json({ error: 'Exam not found' })
 
+    const publishMs = new Date(exam.publishDate).getTime()
+    if (Number.isNaN(publishMs)) {
+      return res.status(400).json({ error: 'Exam has invalid publish date' })
+    }
+    if (publishMs > Date.now()) {
+      return res.status(403).json({ error: 'This exam is not available yet' })
+    }
+
+    const existing = await ExamAttempt.findOne({ examId, firebaseUid: req.user.uid }).lean()
+    if (existing) {
+      return res.status(409).json({
+        error: 'You have already submitted this exam',
+        attemptId: String(existing._id),
+      })
+    }
+
     const startedAt = startedAtRaw ? new Date(startedAtRaw) : new Date()
     const submittedAt = submittedAtRaw ? new Date(submittedAtRaw) : new Date()
     if (Number.isNaN(startedAt.getTime()) || Number.isNaN(submittedAt.getTime())) {
       return res.status(400).json({ error: 'Invalid startedAt/submittedAt' })
     }
 
-    const participatedOnTime = dateKeyUTC(startedAt) === dateKeyUTC(exam.publishDate)
+    if (startedAt.getTime() < publishMs || submittedAt.getTime() < publishMs) {
+      return res.status(400).json({ error: 'Attempt cannot start before the exam publish time' })
+    }
+
+    const participatedOnTime =
+      startedAt.getTime() >= publishMs &&
+      dateKeyUTC(startedAt) === dateKeyUTC(exam.publishDate)
 
     const questions = await Question.find({ examId }).select('q opts ans marks').lean()
     if (questions.length === 0) return res.status(422).json({ error: 'Exam has no questions yet' })
 
     const answerMap = new Map(
-      answers.map(a => [String(a.questionId), a.selected]) // questionId -> selected index (or null)
+      answers.map(a => [String(a.questionId), a.selected])
     )
 
     let correct = 0
@@ -74,31 +116,39 @@ export async function createAttempt(req, res, next) {
         ? timeSec
         : Math.max(0, Math.round((submittedAt.getTime() - startedAt.getTime()) / 1000))
 
-    const attempt = await ExamAttempt.create({
-      firebaseUid: req.user.uid,
-      examId: exam._id,
-      examName: exam.examName,
-      publishDate: exam.publishDate,
-      subjectId: exam.subjectId,
-      levelId: exam.levelId,
+    let attempt
+    try {
+      attempt = await ExamAttempt.create({
+        firebaseUid: req.user.uid,
+        examId: exam._id,
+        examName: exam.examName,
+        publishDate: exam.publishDate,
+        subjectId: exam.subjectId,
+        levelId: exam.levelId,
 
-      playerName: playerName.trim(),
-      school: school || '',
+        playerName: playerName.trim(),
+        school: school || '',
 
-      startedAt,
-      submittedAt,
-      participatedOnTime,
+        startedAt,
+        submittedAt,
+        participatedOnTime,
 
-      score,
-      fullMarks,
-      pct,
-      correct,
-      wrong,
-      skip,
+        score,
+        fullMarks,
+        pct,
+        correct,
+        wrong,
+        skip,
 
-      timeSec: derivedTimeSec,
-      timeStr: timeStr || `${Math.floor(derivedTimeSec / 60)}মি ${derivedTimeSec % 60}সে`,
-    })
+        timeSec: derivedTimeSec,
+        timeStr: timeStr || `${Math.floor(derivedTimeSec / 60)}মি ${derivedTimeSec % 60}সে`,
+      })
+    } catch (err) {
+      if (err.code === 11000) {
+        return res.status(409).json({ error: 'You have already submitted this exam' })
+      }
+      throw err
+    }
 
     let rank = null
     let total = null
@@ -159,8 +209,6 @@ export async function getOverallMerit(req, res, next) {
     const totalParticipants = (await ExamAttempt.distinct('firebaseUid', { participatedOnTime: true }))
       .length
 
-    // Rank users by sum(score) across all on-time attempts.
-    // Tie-break: earlier overall completion time (max submittedAt) ranks higher.
     const ranked = await ExamAttempt.aggregate([
       { $match: { participatedOnTime: true } },
       { $sort: { submittedAt: -1 } },
@@ -194,4 +242,3 @@ export async function getOverallMerit(req, res, next) {
     })
   } catch (err) { next(err) }
 }
-

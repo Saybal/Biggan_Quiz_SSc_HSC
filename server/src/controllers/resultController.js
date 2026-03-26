@@ -63,23 +63,85 @@ export async function leaderboard(req, res, next) {
 }
 
 /** GET /api/admin/results — all results with filters [admin] */
+// export async function getAll(req, res, next) {
+//   try {
+//     const filter = {}
+//     if (req.query.subjectId) filter.subjectId = req.query.subjectId
+//     if (req.query.levelId)   filter.levelId   = req.query.levelId
+
+//     const results = await Result.find(filter)
+//       .sort({ score: -1, timeSec: 1 })
+//       .lean()
+
+//     // Stats
+//     const total   = results.length
+//     const avg     = total ? Math.round(results.reduce((s, r) => s + r.pct, 0) / total) : 0
+//     const topScore= total ? results[0].score : 0
+//     const topFull = total ? results[0].fullMarks : 0
+
+//     res.json({ results, stats: { total, avg, topScore, topFull } })
+//   } catch (err) { next(err) }
+// }
+
+// REPLACE the existing getAll function with this:
 export async function getAll(req, res, next) {
   try {
-    const filter = {}
+    const filter = { participatedOnTime: true }
     if (req.query.subjectId) filter.subjectId = req.query.subjectId
-    if (req.query.levelId)   filter.levelId   = req.query.levelId
+    if (req.query.examId)    filter.examId    = req.query.examId
 
-    const results = await Result.find(filter)
-      .sort({ score: -1, timeSec: 1 })
+    const ExamAttempt = (await import('../models/ExamAttempt.js')).default
+
+    const results = await ExamAttempt.find(filter)
+      .sort({ score: -1, submittedAt: 1 })
+      .populate('subjectId', 'name emoji color')
+      .populate('levelId',   'name short')
       .lean()
 
-    // Stats
-    const total   = results.length
-    const avg     = total ? Math.round(results.reduce((s, r) => s + r.pct, 0) / total) : 0
-    const topScore= total ? results[0].score : 0
-    const topFull = total ? results[0].fullMarks : 0
+    const total    = results.length
+    const avg      = total ? Math.round(results.reduce((s, r) => s + r.pct, 0) / total) : 0
+    const topScore = total ? results[0].score    : 0
+    const topFull  = total ? results[0].fullMarks : 0
 
-    res.json({ results, stats: { total, avg, topScore, topFull } })
+    // Normalize shape so the frontend works without changes
+    const normalized = results.map(r => ({
+      _id:          r._id,
+      name:         r.playerName,
+      school:       r.school,
+      examName:     r.examName,
+      subjectName:  r.subjectId?.name  || '',
+      subjectEmoji: r.subjectId?.emoji || '',
+      subjectColor: r.subjectId?.color || '',
+      levelName:    r.levelId?.name    || '',
+      levelShort:   r.levelId?.short   || '',
+      score:        r.score,
+      fullMarks:    r.fullMarks,
+      pct:          r.pct,
+      correct:      r.correct,
+      wrong:        r.wrong,
+      skip:         r.skip,
+      timeSec:      r.timeSec,
+      timeStr:      r.timeStr,
+      submittedAt:  r.submittedAt,
+      // for detail modal:
+      startedAt:    r.startedAt,
+      firebaseUid:  r.firebaseUid,
+      examId:       r.examId,
+    }))
+
+    res.json({ results: normalized, stats: { total, avg, topScore, topFull } })
+  } catch (err) { next(err) }
+}
+
+export async function getDetail(req, res, next) {
+  try {
+    const ExamAttempt = (await import('../models/ExamAttempt.js')).default
+    const attempt = await ExamAttempt.findById(req.params.id)
+      .populate('subjectId', 'name emoji color')
+      .populate('levelId',   'name short')
+      .lean()
+    if (!attempt) return res.status(404).json({ error: 'Not found' })
+    res.json(attempt)
   } catch (err) { next(err) }
 }
 

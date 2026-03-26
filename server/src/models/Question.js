@@ -9,6 +9,8 @@ const QuestionSchema = new mongoose.Schema(
 
     subjectId:   { type: mongoose.Schema.Types.ObjectId, ref: 'Subject', required: true, index: true },
     levelId:     { type: mongoose.Schema.Types.ObjectId, ref: 'Level',   required: true, index: true },
+    /** Curriculum / class level is `levelId`; this is difficulty tier */
+    difficulty:  { type: String, enum: ['easy', 'medium', 'hard'], default: 'medium', index: true },
     q:           { type: String, required: true },
     opts:        { type: [String], required: true, validate: v => v.length >= 2 },
     ans:         { type: Number, required: true, min: 0, max: 3 },

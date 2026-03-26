@@ -19,8 +19,9 @@ router.get('/questions',  questions.getAll)   // ?subjectId=&levelId=
 router.post('/results',   saveResult)
 router.get('/results/leaderboard', leaderboard) // ?subjectId=&levelId=&limit=
 
-// Exams
+// Exams (static paths before :examId)
 router.get('/exams', exams.list) // ?subjectId=
+router.get('/exams/:examId/attempt-status', requireAuth, examAttempts.getAttemptStatus)
 router.get('/exams/:examId', exams.getExam)
 router.get('/exams/:examId/questions', exams.getExamQuestions)
 
@@ -31,5 +32,8 @@ router.get('/merit/overall', requireAuth, examAttempts.getOverallMerit)
 
 // Cron: send Bengali reminder emails (secret-protected)
 router.post('/cron/send-exam-reminders', sendExamReminders)
+
+// router.get('/admin/settings', getSettings)
+// router.patch('/admin/settings', updateSettings)
 
 export default router

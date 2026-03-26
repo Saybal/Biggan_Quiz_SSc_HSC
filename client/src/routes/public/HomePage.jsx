@@ -42,7 +42,7 @@ export default function HomePage() {
           <div className="flex items-center justify-center bg-card border border-border rounded-2xl py-3 px-1">
             {[
               { icon: "📝", val: "MCQ", lbl: "Format" },
-              { icon: "⏱️", val: "৩০", lbl: "মিনিট" },
+              { icon: "⏱️", val: "১০", lbl: "মিনিট" },
               { icon: "🏆", val: "Merit", lbl: "Ranking" },
               { icon: "✅", val: "১ নম্বর", lbl: "প্রতি প্রশ্ন" },
             ].map((s, i, arr) => (

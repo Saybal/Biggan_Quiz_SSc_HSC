@@ -36,6 +36,11 @@ const ExamAttemptSchema = new mongoose.Schema(
 // Merit ranking sort: score desc, submittedAt asc
 ExamAttemptSchema.index({ examId: 1, participatedOnTime: 1, score: -1, submittedAt: 1 })
 
+// One attempt per user per exam (critical)
+ExamAttemptSchema.index({ firebaseUid: 1, examId: 1 }, { unique: true })
+// Add this line after the existing indexes:
+// ExamAttemptSchema.index({ firebaseUid: 1, examId: 1 }, { unique: true })
+
 // Overall merit ranking sort: user totals are computed via aggregation
 
 export default mongoose.model('ExamAttempt', ExamAttemptSchema)

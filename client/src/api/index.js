@@ -34,21 +34,32 @@ export const levelsAPI = {
 // ═══════════════════════════════════════════════════════════════
 export const questionsAPI = {
   getAll:    (params)            => api.get('/questions', { params }),  // ?subjectId=&levelId=
+  /** Admin: includes unpublished / scheduled exam questions */
+  browse:    (params)            => api.get('/admin/questions/browse', { params }),
   create:    (data)              => api.post('/admin/questions', data),
   update:    (id, data)          => api.put(`/admin/questions/${id}`, data),
   remove:    (id)                => api.delete(`/admin/questions/${id}`),
   bulkCreate:(subjectId, levelId, questions) =>
                                     api.post('/admin/questions/bulk', { subjectId, levelId, questions }),
   export:    (params)            => api.get('/admin/questions/export', { params }),
+  collectionList: (params)       => api.get('/admin/collection/questions', { params }),
+  collectionPatch: (id, data)    => api.patch(`/admin/collection/questions/${id}`, data),
 }
 
 // ═══════════════════════════════════════════════════════════════
 // RESULTS
 // ═══════════════════════════════════════════════════════════════
+// export const resultsAPI = {
+//   save:        (data)   => api.post('/results', data),
+//   leaderboard: (params) => api.get('/results/leaderboard', { params }),
+//   getAll:      (params) => api.get('/admin/results', { params }),
+//   clearAll:    ()       => api.delete('/admin/results'),
+// }
 export const resultsAPI = {
   save:        (data)   => api.post('/results', data),
   leaderboard: (params) => api.get('/results/leaderboard', { params }),
   getAll:      (params) => api.get('/admin/results', { params }),
+  getDetail:   (id)     => api.get(`/admin/results/${id}/detail`),
   clearAll:    ()       => api.delete('/admin/results'),
 }
 
@@ -69,9 +80,12 @@ export const examsAPI = {
   getExam:  (examId)   => api.get(`/exams/${examId}`),
   // Teacher/admin question fetch: GET /api/exams/:examId/questions
   getQuestions: (examId) => api.get(`/exams/${examId}/questions`),
+  // In examsAPI, add:
+// getQuestions: (examId) => api.get(`/exams/${examId}/questions`),
 
   // Auth required:
   submitAttempt: (data) => api.post('/exams/attempts', data),
+  attemptStatus: (examId) => api.get(`/exams/${examId}/attempt-status`),
   myExamMerit:   (examId) => api.get(`/exams/${examId}/merit`),
   overallMerit:  ()       => api.get('/merit/overall'),
 }
@@ -96,5 +110,7 @@ export const pdfAPI = {
 
 // Admin: create exam + store its questions
 export const adminExamsAPI = {
-  create: (data) => api.post('/admin/exams', data),
+  list:   (params) => api.get('/admin/exams', { params }),
+  create: (data)   => api.post('/admin/exams', data),
+  patch:  (examId, data) => api.patch(`/admin/exams/${examId}`, data),
 }

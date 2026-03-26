@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useQuiz } from '../../context/QuizContext.jsx'
 import SelBg from '../../components/layout/SelBg.jsx'
@@ -6,8 +6,15 @@ import StepTracker from '../../components/shared/StepTracker.jsx'
 
 export default function SelectSubjectPage() {
   const navigate = useNavigate()
-  const { subjects, questions, selSubjectId, setSelSubjectId, catalogueLoading } = useQuiz()
+  const { user, authLoading, subjects, questions, selSubjectId, setSelSubjectId, catalogueLoading } = useQuiz()
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate('/login?redirect=/quiz/select-subject', { replace: true })
+      return
+    }
+  }, [authLoading, user, navigate])
 
   const handleNext = () => {
     if (!selSubjectId) { setError('⚠️ একটি বিষয় বেছে নাও!'); return }

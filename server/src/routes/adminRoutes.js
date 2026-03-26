@@ -32,15 +32,24 @@ router.put   ('/levels/:id', levels.update)
 router.delete('/levels/:id', levels.remove)
 
 // ── Questions ─────────────────────────────────────────────────────────────────
+router.get   ('/questions/browse', questions.browseAdmin)
 router.post  ('/questions',        questions.create)
 router.post  ('/questions/bulk',   questions.bulkCreate)
 router.get   ('/questions/export', questions.exportQuestions)
 router.put   ('/questions/:id',    questions.update)
-router.delete('/questions/:id',    questions.remove)
+router.delete('/questions/:id', questions.remove)
+// router.get('/questions/all', questions.getAllAdmin)
+
+// ── Collection (subject → exam filter, bulk metadata edit) ──────────────────
+router.get   ('/collection/questions',      questions.collectionList)
+router.patch ('/collection/questions/:id',  questions.collectionPatch)
 
 // ── Results ───────────────────────────────────────────────────────────────────
 router.get   ('/results',          results.getAll)
-router.delete('/results',          results.clearAll)
+router.delete('/results', results.clearAll)
+// After the existing results routes, add:
+router.get('/results/by-exam', results.getAll)          // ?examId=
+router.get('/results/:id/detail', results.getDetail)    // single attempt detail
 
 // ── Settings ──────────────────────────────────────────────────────────────────
 router.get  ('/settings',          settings.get)
@@ -50,6 +59,8 @@ router.patch('/settings',          settings.update)
 router.post ('/pdf/parse', upload.single('pdf'), parsePdf)
 
 // ── Exams (admin creates exam + stores its questions) ─────────────────────────
-router.post('/exams', exams.create)
+router.get  ('/exams',            exams.listAllAdmin)
+router.patch('/exams/:examId',   exams.patchExam)
+router.post ('/exams',            exams.create)
 
 export default router

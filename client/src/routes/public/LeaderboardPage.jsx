@@ -24,6 +24,7 @@ export default function LeaderboardPage() {
     examsAPI.overallMerit()
       .then(r => {
         if (!alive) return
+        console.log(r.data);
         setRows(r.data.rows || [])
         setMyRank(r.data.myRank ?? null)
         setTotalParticipants(r.data.totalParticipants ?? 0)
@@ -54,7 +55,7 @@ export default function LeaderboardPage() {
       <div className="w-full max-w-[660px] pb-10">
         <div className="text-center mb-5">
           <h1 className="font-display font-extrabold text-[1.8rem] gradient-text-accent">🏆 Merit List</h1>
-          <p className="text-muted text-sm mt-1">On-time অংশগ্রহণের মোট স্কোর অনুযায়ী rank</p>
+          <p className="text-muted text-sm mt-1">On-time অংশগ্রহণের সব পরীক্ষার সর্বমোট স্কোর অনুযায়ী rank</p>
         </div>
 
         {myRank ? (
