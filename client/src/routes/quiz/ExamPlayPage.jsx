@@ -276,11 +276,11 @@ export default function ExamPlayPage() {
                         key={oi}
                         type="button"
                         onClick={() => {
-                          if (submitting) return
+                          if (submitting || selected !== undefined) return
                           const newQs = questions.map((qq, j) => (j === qi ? { ...qq, _selected: oi } : qq))
                           setQuizSession({ ...quizSession, questions: newQs })
                         }}
-                        disabled={submitting}
+                        disabled={submitting || selected !== undefined}
                         className={`text-left border-[1.5px] rounded-xl px-4 py-3 transition ${isSel ? 'border-accent bg-accent/10 text-accent' : 'border-border bg-card2 hover:border-accent hover:text-accent hover:bg-accent/6'}`}
                       >
                         <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg mr-3 font-display font-extrabold flex-shrink-0 ${isSel ? 'bg-accent text-white' : 'bg-border text-muted'}`}>

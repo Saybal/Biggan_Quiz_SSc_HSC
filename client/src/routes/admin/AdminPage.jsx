@@ -1580,65 +1580,248 @@ function PdfTab() {
 // }
 
 // ── Collection Tab ────────────────────────────────────────────────────────────
+// function CollectionTab() {
+//   const { subjects, levels, showToast } = useQuiz()
+//   const [fSubj,   setFSubj]  = useState('')
+//   const [fExam,   setFExam]  = useState('')
+//   const [exams,   setExams]  = useState([])
+//   const [qs,      setQs]     = useState([])
+//   const [loading, setLoading]= useState(false)
+//   const [editId,  setEditId] = useState(null)
+//   const [editForm,setEditForm]= useState({})
+//   const [err,     setErr]    = useState('')
+
+//   // Load exams when subject changes
+//   useEffect(() => {
+//     if (!fSubj) { setExams([]); setFExam(''); setQs([]); return }
+//     examsAPI.list({ subjectId: fSubj }).then(r => {
+//       setExams(r.data)
+//       setFExam(''); setQs([])
+//     }).catch(() => {})
+//   }, [fSubj])
+
+//   // Load questions when exam changes
+//   useEffect(() => {
+//     if (!fExam) { setQs([]); return }
+//     setLoading(true)
+//     examsAPI.getQuestions(fExam).then(r => { setQs(r.data) }).catch(() => {}).finally(() => setLoading(false))
+//   }, [fExam])
+
+//   const startEdit = (q) => {
+//     setEditId(q._id)
+//     setEditForm({
+//       q: q.q,
+//       opts: [...q.opts],
+//       ans: q.ans,
+//       examName: q.examName || '',
+//       publishDate: q.publishDate ? q.publishDate.slice(0,10) : '',
+//     })
+//     setErr('')
+//   }
+
+//   const handleSave = async () => {
+//     if (!editForm.q?.trim())             { setErr('⚠️ প্রশ্ন লিখুন'); return }
+//     if (!editForm.examName?.trim())      { setErr('⚠️ Exam Name লিখুন'); return }
+//     if (!editForm.publishDate)           { setErr('⚠️ Publish Date দিন'); return }
+//     if (editForm.opts.some(o=>!o?.trim())){ setErr('⚠️ সব বিকল্প লিখুন'); return }
+//     try {
+//       await questionsAPI.update(editId, editForm)
+//       showToast('✅ আপডেট হয়েছে!', 'correct-t')
+//       // Refresh question list
+//       const r = await examsAPI.getQuestions(fExam)
+//       setQs(r.data)
+//       setEditId(null)
+//     } catch { setErr('❌ সংরক্ষণ হয়নি') }
+//   }
+
+//   const selectedExam = exams.find(e => e._id === fExam)
+
+//   return (
+//     <div>
+//       <div className="font-display font-bold text-sm mb-3">📚 Collection</div>
+//       <div className="grid grid-cols-2 gap-3 mb-4">
+//         <div>
+//           <label className="block text-muted text-xs mb-1">বিষয় *</label>
+//           <Sel value={fSubj} onChange={e=>setFSubj(e.target.value)}>
+//             <option value="">— বিষয় নির্বাচন করুন —</option>
+//             {subjects.map(s=><option key={s._id} value={s._id}>{s.emoji} {s.name}</option>)}
+//           </Sel>
+//         </div>
+//         <div>
+//           <label className="block text-muted text-xs mb-1">Exam Name</label>
+//           <Sel value={fExam} onChange={e=>setFExam(e.target.value)} disabled={!fSubj}>
+//             <option value="">— Exam নির্বাচন করুন —</option>
+//             {exams.map(e=><option key={e._id} value={e._id}>{e.examName} ({new Date(e.publishDate).toLocaleDateString('bn-BD')})</option>)}
+//           </Sel>
+//         </div>
+//       </div>
+
+//       {selectedExam && (
+//         <div className="bg-card2 border border-border rounded-xl px-3.5 py-2.5 mb-3 flex justify-between items-center">
+//           <div>
+//             <span className="font-display font-bold text-accent text-sm">{selectedExam.examName}</span>
+//             <span className="text-muted text-xs ml-2">📅 {new Date(selectedExam.publishDate).toLocaleDateString('bn-BD')}</span>
+//           </div>
+//           <span className="text-xs bg-accent/10 text-accent px-2 py-0.5 rounded-full">{qs.length} প্রশ্ন</span>
+//         </div>
+//       )}
+
+//       {loading && <div className="py-8 text-center text-muted text-sm animate-pulse">লোড হচ্ছে…</div>}
+
+//       {!loading && fExam && qs.length === 0 && (
+//         <div className="py-8 text-center text-muted text-sm"><div className="text-3xl mb-2">📭</div>কোনো প্রশ্ন নেই</div>
+//       )}
+
+//       <div className="flex flex-col gap-3">
+//         {qs.map((q, i) => (
+//           <div key={q._id} className="bg-card border border-border rounded-xl p-3.5">
+//             {editId === q._id ? (
+//               <div>
+//                 <div className="grid grid-cols-2 gap-2 mb-2">
+//                   <div>
+//                     <label className="text-muted text-xs mb-1 block">Exam Name *</label>
+//                     <Inp value={editForm.examName} onChange={e=>setEditForm(f=>({...f,examName:e.target.value}))} placeholder="Exam Name"/>
+//                   </div>
+//                   <div>
+//                     <label className="text-muted text-xs mb-1 block">Publish Date *</label>
+//                     <Inp type="date" value={editForm.publishDate} onChange={e=>setEditForm(f=>({...f,publishDate:e.target.value}))}/>
+//                   </div>
+//                 </div>
+//                 <textarea className="w-full bg-card2 border-[1.5px] border-border rounded-xl px-3.5 py-2.5 text-textprimary font-body text-sm outline-none focus:border-accent resize-y min-h-[72px] mb-2" value={editForm.q} onChange={e=>setEditForm(f=>({...f,q:e.target.value}))}/>
+//                 {[0,1,2,3].map(oi=>(
+//                   <div key={oi} className="flex items-center gap-2 mb-1.5">
+//                     <span className="text-xs text-muted w-4">{LETTERS[oi]}</span>
+//                     <input className="flex-1 bg-card2 border border-border rounded-xl px-3 py-1.5 text-textprimary text-xs outline-none focus:border-accent" value={editForm.opts?.[oi]||''} onChange={e=>{const o=[...editForm.opts];o[oi]=e.target.value;setEditForm(f=>({...f,opts:o}))}}/>
+//                     <input type="radio" name={`collAns${q._id}`} checked={editForm.ans===oi} onChange={()=>setEditForm(f=>({...f,ans:oi}))} className="w-4 h-4 accent-green cursor-pointer"/>
+//                   </div>
+//                 ))}
+//                 {err && <p className="text-accent2 text-xs mb-2">{err}</p>}
+//                 <div className="flex gap-2 mt-2">
+//                   <Btn variant="accent" onClick={handleSave}>💾 সংরক্ষণ</Btn>
+//                   <Btn variant="outline" onClick={()=>setEditId(null)}>বাতিল</Btn>
+//                 </div>
+//               </div>
+//             ) : (
+//               <div>
+//                 <div className="flex justify-between items-start mb-1.5">
+//                   <span className="text-xs text-muted font-bold">#{i+1}</span>
+//                   <Btn variant="blue" onClick={()=>startEdit(q)}>✏️ সম্পাদনা</Btn>
+//                 </div>
+//                 <div className="text-sm font-display font-bold mb-2 leading-snug">{q.q}</div>
+//                 <div className="flex flex-col gap-1">
+//                   {q.opts.map((o,oi)=>(
+//                     <div key={oi} className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs border ${oi===q.ans?'border-green bg-green/10 text-green':'border-border text-muted'}`}>
+//                       <span className="font-bold w-4">{LETTERS[oi]})</span> {o}
+//                     </div>
+//                   ))}
+//                 </div>
+//               </div>
+//             )}
+//           </div>
+//         ))}
+//       </div>
+//     </div>
+//   )
+// }
 function CollectionTab() {
   const { subjects, levels, showToast } = useQuiz()
-  const [fSubj,   setFSubj]  = useState('')
-  const [fExam,   setFExam]  = useState('')
-  const [exams,   setExams]  = useState([])
-  const [qs,      setQs]     = useState([])
-  const [loading, setLoading]= useState(false)
-  const [editId,  setEditId] = useState(null)
-  const [editForm,setEditForm]= useState({})
-  const [err,     setErr]    = useState('')
+  const [fSubj,      setFSubj]     = useState('')
+  const [fExam,      setFExam]     = useState('')
+  const [exams,      setExams]     = useState([])
+  const [qs,         setQs]        = useState([])
+  const [loading,    setLoading]   = useState(false)
+  const [editQId,    setEditQId]   = useState(null)
+  const [editQForm,  setEditQForm] = useState({})
+  const [qErr,       setQErr]      = useState('')
+  // Exam-level edit
+  const [examEditOpen, setExamEditOpen] = useState(false)
+  const [examEditForm, setExamEditForm] = useState({})
+  const [examEditErr,  setExamEditErr]  = useState('')
 
-  // Load exams when subject changes
-  useEffect(() => {
-    if (!fSubj) { setExams([]); setFExam(''); setQs([]); return }
-    examsAPI.list({ subjectId: fSubj }).then(r => {
-      setExams(r.data)
-      setFExam(''); setQs([])
-    }).catch(() => {})
-  }, [fSubj])
+  const loadExams = useCallback(async (subjId) => {
+    if (!subjId) { setExams([]); setFExam(''); setQs([]); return }
+    try { const r = await examsAPI.list({ subjectId: subjId }); setExams(r.data) } catch {}
+  }, [])
 
-  // Load questions when exam changes
+  useEffect(() => { loadExams(fSubj) }, [fSubj, loadExams])
+
   useEffect(() => {
     if (!fExam) { setQs([]); return }
     setLoading(true)
-    examsAPI.getQuestions(fExam).then(r => { setQs(r.data) }).catch(() => {}).finally(() => setLoading(false))
+    examsAPI.getQuestions(fExam).then(r => setQs(r.data)).catch(()=>{}).finally(()=>setLoading(false))
   }, [fExam])
 
-  const startEdit = (q) => {
-    setEditId(q._id)
-    setEditForm({
-      q: q.q,
-      opts: [...q.opts],
-      ans: q.ans,
-      examName: q.examName || '',
-      publishDate: q.publishDate ? q.publishDate.slice(0,10) : '',
-    })
-    setErr('')
+  const selectedExam = exams.find(e => e._id === fExam)
+
+  // ── Delete entire exam ──
+  const handleDeleteExam = async () => {
+    if (!selectedExam) return
+    if (!confirm(`"${selectedExam.examName}" এবং এর সব প্রশ্ন মুছে ফেলবো?`)) return
+    try {
+      await adminExamsAPI.remove(fExam)
+      showToast('🗑️ Exam মুছা হয়েছে', 'wrong-t')
+      setFExam(''); setQs([])
+      loadExams(fSubj)
+    } catch { showToast('❌ মুছা যায়নি', 'wrong-t') }
   }
 
-  const handleSave = async () => {
-    if (!editForm.q?.trim())             { setErr('⚠️ প্রশ্ন লিখুন'); return }
-    if (!editForm.examName?.trim())      { setErr('⚠️ Exam Name লিখুন'); return }
-    if (!editForm.publishDate)           { setErr('⚠️ Publish Date দিন'); return }
-    if (editForm.opts.some(o=>!o?.trim())){ setErr('⚠️ সব বিকল্প লিখুন'); return }
+  // ── Open exam edit modal ──
+  const openExamEdit = () => {
+    if (!selectedExam) return
+    setExamEditForm({
+      examName:    selectedExam.examName,
+      subjectId:   selectedExam.subject?._id  || fSubj,
+      levelId:     selectedExam.level?._id    || '',
+      publishDate: selectedExam.publishDate
+        ? new Date(selectedExam.publishDate).toISOString().slice(0, 16)  // datetime-local format
+        : '',
+    })
+    setExamEditErr('')
+    setExamEditOpen(true)
+  }
+
+  const handleExamEditSave = async () => {
+    if (!examEditForm.examName?.trim()) return setExamEditErr('⚠️ Exam Name লিখুন')
+    if (!examEditForm.publishDate)      return setExamEditErr('⚠️ Publish Date দিন')
     try {
-      await questionsAPI.update(editId, editForm)
-      showToast('✅ আপডেট হয়েছে!', 'correct-t')
-      // Refresh question list
+      await adminExamsAPI.update(fExam, {
+        examName:    examEditForm.examName.trim(),
+        subjectId:   examEditForm.subjectId,
+        levelId:     examEditForm.levelId,
+        publishDate: examEditForm.publishDate,
+      })
+      showToast('✅ Exam আপডেট হয়েছে!', 'correct-t')
+      setExamEditOpen(false)
+      loadExams(fSubj)
+      // Refresh questions too (publishDate may have changed)
       const r = await examsAPI.getQuestions(fExam)
       setQs(r.data)
-      setEditId(null)
-    } catch { setErr('❌ সংরক্ষণ হয়নি') }
+    } catch { setExamEditErr('❌ আপডেট হয়নি') }
   }
 
-  const selectedExam = exams.find(e => e._id === fExam)
+  // ── Question edit ──
+  const startEditQ = (q) => {
+    setEditQId(q._id)
+    setEditQForm({ q: q.q, opts: [...q.opts], ans: q.ans })
+    setQErr('')
+  }
+  const handleSaveQ = async () => {
+    if (!editQForm.q?.trim())              return setQErr('⚠️ প্রশ্ন লিখুন')
+    if (editQForm.opts.some(o=>!o?.trim()))return setQErr('⚠️ সব বিকল্প লিখুন')
+    if (editQForm.ans < 0)                 return setQErr('⚠️ সঠিক উত্তর select করুন')
+    try {
+      await questionsAPI.update(editQId, editQForm)
+      showToast('✅ আপডেট!', 'correct-t')
+      const r = await examsAPI.getQuestions(fExam)
+      setQs(r.data); setEditQId(null)
+    } catch { setQErr('❌ সংরক্ষণ হয়নি') }
+  }
 
   return (
     <div>
       <div className="font-display font-bold text-sm mb-3">📚 Collection</div>
+
+      {/* Filters */}
       <div className="grid grid-cols-2 gap-3 mb-4">
         <div>
           <label className="block text-muted text-xs mb-1">বিষয় *</label>
@@ -1648,7 +1831,7 @@ function CollectionTab() {
           </Sel>
         </div>
         <div>
-          <label className="block text-muted text-xs mb-1">Exam Name</label>
+          <label className="block text-muted text-xs mb-1">Exam</label>
           <Sel value={fExam} onChange={e=>setFExam(e.target.value)} disabled={!fSubj}>
             <option value="">— Exam নির্বাচন করুন —</option>
             {exams.map(e=><option key={e._id} value={e._id}>{e.examName} ({new Date(e.publishDate).toLocaleDateString('bn-BD')})</option>)}
@@ -1656,62 +1839,62 @@ function CollectionTab() {
         </div>
       </div>
 
+      {/* Exam action bar */}
       {selectedExam && (
-        <div className="bg-card2 border border-border rounded-xl px-3.5 py-2.5 mb-3 flex justify-between items-center">
+        <div className="bg-card2 border border-border rounded-xl px-3.5 py-2.5 mb-4 flex flex-wrap gap-2 items-center justify-between">
           <div>
             <span className="font-display font-bold text-accent text-sm">{selectedExam.examName}</span>
-            <span className="text-muted text-xs ml-2">📅 {new Date(selectedExam.publishDate).toLocaleDateString('bn-BD')}</span>
+            <span className="text-muted text-xs ml-2">
+              📅 {new Date(selectedExam.publishDate).toLocaleString('bn-BD')}
+            </span>
+            <span className="text-muted text-xs ml-2">({qs.length} প্রশ্ন)</span>
           </div>
-          <span className="text-xs bg-accent/10 text-accent px-2 py-0.5 rounded-full">{qs.length} প্রশ্ন</span>
+          <div className="flex gap-2">
+            <Btn variant="blue"   onClick={openExamEdit}>✏️ Exam Edit</Btn>
+            <Btn variant="danger" onClick={handleDeleteExam}>🗑️ Exam মুছুন</Btn>
+          </div>
         </div>
       )}
 
       {loading && <div className="py-8 text-center text-muted text-sm animate-pulse">লোড হচ্ছে…</div>}
-
       {!loading && fExam && qs.length === 0 && (
         <div className="py-8 text-center text-muted text-sm"><div className="text-3xl mb-2">📭</div>কোনো প্রশ্ন নেই</div>
       )}
 
+      {/* Question list */}
       <div className="flex flex-col gap-3">
         {qs.map((q, i) => (
           <div key={q._id} className="bg-card border border-border rounded-xl p-3.5">
-            {editId === q._id ? (
+            {editQId === q._id ? (
               <div>
-                <div className="grid grid-cols-2 gap-2 mb-2">
-                  <div>
-                    <label className="text-muted text-xs mb-1 block">Exam Name *</label>
-                    <Inp value={editForm.examName} onChange={e=>setEditForm(f=>({...f,examName:e.target.value}))} placeholder="Exam Name"/>
-                  </div>
-                  <div>
-                    <label className="text-muted text-xs mb-1 block">Publish Date *</label>
-                    <Inp type="date" value={editForm.publishDate} onChange={e=>setEditForm(f=>({...f,publishDate:e.target.value}))}/>
-                  </div>
-                </div>
-                <textarea className="w-full bg-card2 border-[1.5px] border-border rounded-xl px-3.5 py-2.5 text-textprimary font-body text-sm outline-none focus:border-accent resize-y min-h-[72px] mb-2" value={editForm.q} onChange={e=>setEditForm(f=>({...f,q:e.target.value}))}/>
+                <textarea className="w-full bg-card2 border-[1.5px] border-border rounded-xl px-3.5 py-2.5 text-textprimary font-body text-sm outline-none focus:border-accent resize-y min-h-[72px] mb-2"
+                  value={editQForm.q} onChange={e=>setEditQForm(f=>({...f,q:e.target.value}))}/>
                 {[0,1,2,3].map(oi=>(
                   <div key={oi} className="flex items-center gap-2 mb-1.5">
                     <span className="text-xs text-muted w-4">{LETTERS[oi]}</span>
-                    <input className="flex-1 bg-card2 border border-border rounded-xl px-3 py-1.5 text-textprimary text-xs outline-none focus:border-accent" value={editForm.opts?.[oi]||''} onChange={e=>{const o=[...editForm.opts];o[oi]=e.target.value;setEditForm(f=>({...f,opts:o}))}}/>
-                    <input type="radio" name={`collAns${q._id}`} checked={editForm.ans===oi} onChange={()=>setEditForm(f=>({...f,ans:oi}))} className="w-4 h-4 accent-green cursor-pointer"/>
+                    <input className="flex-1 bg-card2 border border-border rounded-xl px-3 py-1.5 text-textprimary text-xs outline-none focus:border-accent"
+                      value={editQForm.opts?.[oi]||''} onChange={e=>{const o=[...editQForm.opts];o[oi]=e.target.value;setEditQForm(f=>({...f,opts:o}))}}/>
+                    <input type="radio" name={`collAns${q._id}`} checked={editQForm.ans===oi}
+                      onChange={()=>setEditQForm(f=>({...f,ans:oi}))} className="w-4 h-4 accent-green cursor-pointer"/>
                   </div>
                 ))}
-                {err && <p className="text-accent2 text-xs mb-2">{err}</p>}
+                {qErr && <p className="text-accent2 text-xs mb-2">{qErr}</p>}
                 <div className="flex gap-2 mt-2">
-                  <Btn variant="accent" onClick={handleSave}>💾 সংরক্ষণ</Btn>
-                  <Btn variant="outline" onClick={()=>setEditId(null)}>বাতিল</Btn>
+                  <Btn variant="accent" onClick={handleSaveQ}>💾 সংরক্ষণ</Btn>
+                  <Btn variant="outline" onClick={()=>setEditQId(null)}>বাতিল</Btn>
                 </div>
               </div>
             ) : (
               <div>
                 <div className="flex justify-between items-start mb-1.5">
                   <span className="text-xs text-muted font-bold">#{i+1}</span>
-                  <Btn variant="blue" onClick={()=>startEdit(q)}>✏️ সম্পাদনা</Btn>
+                  <Btn variant="blue" onClick={()=>startEditQ(q)}>✏️ সম্পাদনা</Btn>
                 </div>
                 <div className="text-sm font-display font-bold mb-2 leading-snug">{q.q}</div>
                 <div className="flex flex-col gap-1">
                   {q.opts.map((o,oi)=>(
                     <div key={oi} className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs border ${oi===q.ans?'border-green bg-green/10 text-green':'border-border text-muted'}`}>
-                      <span className="font-bold w-4">{LETTERS[oi]})</span> {o}
+                      <span className="font-bold w-4">{LETTERS[oi]}</span> {o}
                     </div>
                   ))}
                 </div>
@@ -1720,6 +1903,33 @@ function CollectionTab() {
           </div>
         ))}
       </div>
+
+      {/* Exam Edit Modal */}
+      <Modal open={examEditOpen} onClose={()=>setExamEditOpen(false)} title="✏️ Exam তথ্য আপডেট করুন">
+        <Row label="Exam Name *">
+          <Inp value={examEditForm.examName||''} onChange={e=>setExamEditForm(f=>({...f,examName:e.target.value}))} placeholder="Exam Name"/>
+        </Row>
+        <Row label="বিষয় *">
+          <Sel value={examEditForm.subjectId||''} onChange={e=>setExamEditForm(f=>({...f,subjectId:e.target.value}))}>
+            <option value="">— বিষয় —</option>
+            {subjects.map(s=><option key={s._id} value={s._id}>{s.emoji} {s.name}</option>)}
+          </Sel>
+        </Row>
+        <Row label="Level">
+          <Sel value={examEditForm.levelId||''} onChange={e=>setExamEditForm(f=>({...f,levelId:e.target.value}))}>
+            <option value="">— Level —</option>
+            {levels.map(l=><option key={l._id} value={l._id}>{l.name}</option>)}
+          </Sel>
+        </Row>
+        <Row label="Publish Date & Time *">
+          <Inp type="datetime-local" value={examEditForm.publishDate||''} onChange={e=>setExamEditForm(f=>({...f,publishDate:e.target.value}))}/>
+        </Row>
+        {examEditErr && <p className="text-accent2 text-xs mb-2 text-center">{examEditErr}</p>}
+        <div className="flex gap-2 mt-4">
+          <button onClick={handleExamEditSave} className="flex-1 py-2.5 rounded-xl font-display font-bold text-sm text-[#1a1200]" style={{background:'linear-gradient(135deg,var(--accent),#ff9f43)'}}>💾 সংরক্ষণ</button>
+          <button onClick={()=>setExamEditOpen(false)} className="flex-1 py-2.5 rounded-xl font-display font-semibold text-sm text-muted border border-border">বাতিল</button>
+        </div>
+      </Modal>
     </div>
   )
 }

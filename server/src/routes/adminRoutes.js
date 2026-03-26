@@ -61,6 +61,9 @@ router.post ('/pdf/parse', upload.single('pdf'), parsePdf)
 // ── Exams (admin creates exam + stores its questions) ─────────────────────────
 router.get  ('/exams',            exams.listAllAdmin)
 router.patch('/exams/:examId',   exams.patchExam)
-router.post ('/exams',            exams.create)
+router.post('/exams', exams.create)
+
+router.patch ('/exams/:examId', exams.update)
+router.delete('/exams/:examId', exams.remove)
 
 export default router

@@ -109,8 +109,15 @@ export const pdfAPI = {
 }
 
 // Admin: create exam + store its questions
+// export const adminExamsAPI = {
+//   list:   (params) => api.get('/admin/exams', { params }),
+//   create: (data)   => api.post('/admin/exams', data),
+//   patch:  (examId, data) => api.patch(`/admin/exams/${examId}`, data),
+// }
+
 export const adminExamsAPI = {
   list:   (params) => api.get('/admin/exams', { params }),
-  create: (data)   => api.post('/admin/exams', data),
-  patch:  (examId, data) => api.patch(`/admin/exams/${examId}`, data),
+  create: (data)          => api.post('/admin/exams', data),
+  update: (examId, data)  => api.patch(`/admin/exams/${examId}`, data),
+  remove: (examId)        => api.delete(`/admin/exams/${examId}`),
 }

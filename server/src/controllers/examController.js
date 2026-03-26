@@ -231,3 +231,47 @@ export async function findOrCreateExamDoc({ subjectId, levelId, examName, publis
   }
   return exam
 }
+
+// DELETE /api/admin/exams/:examId  — removes exam + all its questions
+export async function remove(req, res, next) {
+  try {
+    const { examId } = req.params
+    const exam = await Exam.findByIdAndDelete(examId)
+    if (!exam) return res.status(404).json({ error: 'Exam not found' })
+    await Question.deleteMany({ examId })
+    res.json({ message: 'Exam and all its questions deleted' })
+  } catch (err) { next(err) }
+}
+
+// PATCH /api/admin/exams/:examId  — update exam metadata + sync questions
+export async function update(req, res, next) {
+  try {
+    const { examId } = req.params
+    const { examName, subjectId, levelId, publishDate } = req.body
+
+    const pd = publishDate ? new Date(publishDate) : null
+    if (publishDate && isNaN(pd?.getTime()))
+      return res.status(400).json({ error: 'Invalid publishDate' })
+
+    const updates = {}
+    if (examName)   updates.examName    = examName.trim()
+    if (subjectId)  updates.subjectId   = subjectId
+    if (levelId)    updates.levelId     = levelId
+    if (pd)         updates.publishDate = pd
+
+    const exam = await Exam.findByIdAndUpdate(examId, updates, { new: true })
+    if (!exam) return res.status(404).json({ error: 'Exam not found' })
+
+    // Keep questions in sync
+    const qUpdates = {}
+    if (updates.examName)    qUpdates.examName    = updates.examName
+    if (updates.subjectId)   qUpdates.subjectId   = updates.subjectId
+    if (updates.levelId)     qUpdates.levelId     = updates.levelId
+    if (updates.publishDate) qUpdates.publishDate = updates.publishDate
+    if (Object.keys(qUpdates).length) {
+      await Question.updateMany({ examId }, { $set: qUpdates })
+    }
+
+    res.json(exam)
+  } catch (err) { next(err) }
+}
