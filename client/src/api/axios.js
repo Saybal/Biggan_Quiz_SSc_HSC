@@ -24,13 +24,26 @@ const api = axios.create({
 })
 
 // ── Attach fresh Firebase ID token to every request ───────────────────────────
+// api.interceptors.request.use(async (config) => {
+//   const user = auth.currentUser
+//   if (user) {
+//     // getIdToken(false) returns cached token if still valid, refreshes if expired
+//     const token = await user.getIdToken(false)
+//     config.headers.Authorization = `Bearer ${token}`
+//   }
+//   return config
+// })
+
+// In the request interceptor, after setting the Authorization header, add:
 api.interceptors.request.use(async (config) => {
   const user = auth.currentUser
   if (user) {
-    // getIdToken(false) returns cached token if still valid, refreshes if expired
     const token = await user.getIdToken(false)
     config.headers.Authorization = `Bearer ${token}`
   }
+  // Always attach device fingerprint if available
+  const fp = localStorage.getItem('device_fp')
+  if (fp) config.headers['X-Device-Fingerprint'] = fp
   return config
 })
 

@@ -53,22 +53,63 @@ export async function requireAuth(req, res, next) {
 
     // Keep a MongoDB mirror of Firebase users for features like email reminders.
     // This is best-effort and must not block requests.
-    try {
-      const role = decoded.role || 'user'
-      await User.findOneAndUpdate(
-        { firebaseUid: decoded.uid },
-        {
-          firebaseUid: decoded.uid,
-          email: decoded.email,
-          displayName: decoded.name || '',
-          emailVerified: decoded.email_verified || false,
-          role,
-        },
-        { upsert: true, new: true, setDefaultsOnInsert: true }
-      )
-    } catch {
-      // ignore mongo errors for auth flow
+    // try {
+    //   const role = decoded.role || 'user'
+    //   await User.findOneAndUpdate(
+    //     { firebaseUid: decoded.uid },
+    //     {
+    //       firebaseUid: decoded.uid,
+    //       email: decoded.email,
+    //       displayName: decoded.name || '',
+    //       emailVerified: decoded.email_verified || false,
+    //       role,
+    //     },
+    //     { upsert: true, new: true, setDefaultsOnInsert: true }
+    //   )
+    // } catch {
+    //   // ignore mongo errors for auth flow
+    // }
+    // Replace the try block inside requireAuth (the "Keep a MongoDB mirror" section):
+try {
+  const fingerprint = req.headers['x-device-fingerprint']
+  const userAgent   = req.headers['user-agent'] || ''
+  const role = decoded.role || 'user'
+
+  const updateOp = {
+    $set: {
+      firebaseUid:   decoded.uid,
+      email:         decoded.email,
+      displayName:   decoded.name || '',
+      emailVerified: decoded.email_verified || false,
+      role,
+    },
+  }
+
+  // Register device if fingerprint provided and not already tracked
+  if (fingerprint) {
+    updateOp.$addToSet = {
+      devices: { fingerprint, userAgent, lastSeen: new Date() }
     }
+  }
+
+  const dbUser = await User.findOneAndUpdate(
+    { firebaseUid: decoded.uid },
+    updateOp,
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  )
+
+  // Update lastSeen for existing device (addToSet won't update it)
+  if (fingerprint && dbUser) {
+    await User.updateOne(
+      { firebaseUid: decoded.uid, 'devices.fingerprint': fingerprint },
+      { $set: { 'devices.$.lastSeen': new Date() } }
+    )
+  }
+
+  req.dbUser = dbUser
+} catch {
+  // ignore mongo errors for auth flow
+}
     next()
   } catch (err) {
     res.status(err.status || 401).json({ error: err.message || 'Unauthorized' })
