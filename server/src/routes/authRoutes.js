@@ -12,5 +12,6 @@ const router = Router()
 router.get ('/me',              requireAuth, getMe)
 router.get ('/settings',        requireAuth, getSettings)
 router.post('/set-admin-claim', setAdminClaim)   // secret-protected, no JWT needed
+router.get('/me/profile', requireAuth)
 
 export default router

@@ -71,6 +71,8 @@ export async function getSettings(req, res, next) {
 }
 
 export async function getMyProfile(req, res, next) {
+
+ 
   try {
     const user = await User.findOne({ firebaseUid: req.user.uid })
       .select('hasPurchased emailVerified devices displayName email purchasedAt')

@@ -7,6 +7,8 @@ import { requireAuth } from '../middleware/firebaseAuth.js'
 import * as exams from '../controllers/examController.js'
 import * as examAttempts from '../controllers/examAttemptController.js'
 import { sendExamReminders } from '../controllers/emailController.js'
+import { deviceLimit } from '../middleware/deviceLimit.js'
+// import { requirePurchase } from '../middleware/requirePurchase.js'
 
 const router = Router()
 
@@ -23,10 +25,10 @@ router.get('/results/leaderboard', leaderboard) // ?subjectId=&levelId=&limit=
 router.get('/exams', exams.list) // ?subjectId=
 router.get('/exams/:examId/attempt-status', requireAuth, examAttempts.getAttemptStatus)
 router.get('/exams/:examId', exams.getExam)
-router.get('/exams/:examId/questions', exams.getExamQuestions)
+router.get('/exams/:examId/questions', requireAuth, deviceLimit, exams.getExamQuestions)
 
 // Exam attempts + merit (auth required)
-router.post('/exams/attempts', requireAuth, examAttempts.createAttempt)
+router.post('/exams/attempts', requireAuth, deviceLimit, examAttempts.createAttempt)
 router.get('/exams/:examId/merit', requireAuth, examAttempts.getMyExamMerit)
 router.get('/merit/overall', requireAuth, examAttempts.getOverallMerit)
 
