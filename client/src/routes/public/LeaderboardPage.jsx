@@ -5,7 +5,7 @@ import { examsAPI } from '../../api/index.js'
 
 export default function LeaderboardPage() {
   const navigate = useNavigate()
-  const { user, authLoading, showToast } = useQuiz()
+  const { user, dbUser, authLoading, showToast } = useQuiz()
 
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
@@ -15,8 +15,22 @@ export default function LeaderboardPage() {
   useEffect(() => {
     let alive = true
 
+    // if (!authLoading && !user) {
+    //   navigate('/login?redirect=/leaderboard', { replace: true })
+    //   return
+    // }
     if (!authLoading && !user) {
       navigate('/login?redirect=/leaderboard', { replace: true })
+      return
+    }
+    if (!authLoading && user && !user.emailVerified) {
+      showToast('আপনার অ্যাকাউন্ট ভেরিফাই করা হয়নি। অনুগ্রহ করে আপনার ইমেইল চেক করুন।', 'wrong-t')
+      navigate('/login', { replace: true })
+      return
+    }
+    if (!authLoading && user && dbUser && !dbUser.hasPurchased) {
+      showToast('আপনি এই কোর্সটি কিনেননি। কোর্সটি কিনতে আগ্রহী হলে যোগাযোগ করুন: +880XXXXXXXXXX', 'wrong-t')
+      navigate('/', { replace: true })
       return
     }
 
@@ -39,7 +53,7 @@ export default function LeaderboardPage() {
       })
 
     return () => { alive = false }
-  }, [authLoading, user, navigate, showToast])
+  }, [authLoading, user, dbUser, navigate, showToast])
 
   const rankIcon = r => r === 1 ? '🥇' : r === 2 ? '🥈' : r === 3 ? '🥉' : null
   const rankCls  = r => r === 1 ? 'text-accent text-xl font-extrabold' : r === 2 ? 'text-[#bdc3d4] font-bold' : r === 3 ? 'text-[#cd7f32] font-bold' : 'text-muted text-sm'

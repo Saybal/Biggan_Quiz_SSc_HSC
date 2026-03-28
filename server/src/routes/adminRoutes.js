@@ -7,7 +7,8 @@ import * as questions    from '../controllers/questionController.js'
 import * as results      from '../controllers/resultController.js'
 import * as settings     from '../controllers/settingsController.js'
 import { parsePdf }      from '../controllers/pdfController.js'
-import * as exams        from '../controllers/examController.js'
+import * as exams from '../controllers/examController.js'
+import * as users from '../controllers/userController.js'
 
 
 // multer: store PDF in memory (no disk write, max 10 MB)
@@ -65,5 +66,10 @@ router.post('/exams', exams.create)
 
 router.patch ('/exams/:examId', exams.update)
 router.delete('/exams/:examId', exams.remove)
+
+router.get('/exams/:examId/questions', exams.getExamQuestionsAdmin)
+
+router.get  ('/students',                       users.listStudents)
+router.patch('/students/:firebaseUid/purchase', users.updatePurchase)
 
 export default router

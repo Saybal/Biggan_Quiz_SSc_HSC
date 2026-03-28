@@ -6,7 +6,7 @@ import StepTracker from '../../components/shared/StepTracker.jsx'
 
 export default function SelectSubjectPage() {
   const navigate = useNavigate()
-  const { user, authLoading, subjects, questions, selSubjectId, setSelSubjectId, catalogueLoading } = useQuiz()
+  const { subjects, questions, selSubjectId, setSelSubjectId, catalogueLoading, user, authLoading, dbUser, showToast } = useQuiz()
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -15,6 +15,23 @@ export default function SelectSubjectPage() {
       return
     }
   }, [authLoading, user, navigate])
+
+  useEffect(() => {
+    if (authLoading) return
+    if (!user) {
+      navigate('/login?redirect=/quiz/subject', { replace: true })
+      return
+    }
+    if (user && !user.emailVerified) {
+      showToast('আপনার অ্যাকাউন্ট ভেরিফাই করা হয়নি। অনুগ্রহ করে আপনার ইমেইল চেক করুন।', 'wrong-t')
+      navigate('/login', { replace: true })
+      return
+    }
+    if (dbUser && !dbUser.hasPurchased) {
+      showToast('আপনি এই কোর্সটি কিনেননি। কোর্সটি কিনতে আগ্রহী হলে উক্ত হোয়াটসঅ্যাপ নাম্বারে যোগাযোগ করুন: +880XXXXXXXXXX', 'wrong-t')
+      navigate('/', { replace: true })
+    }
+  }, [authLoading, user, dbUser, navigate, showToast])
 
   const handleNext = () => {
     if (!selSubjectId) { setError('⚠️ একটি বিষয় বেছে নাও!'); return }

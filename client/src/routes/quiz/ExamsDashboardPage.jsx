@@ -12,12 +12,15 @@ function formatDateUTC(d) {
 
 export default function ExamsDashboardPage() {
   const navigate = useNavigate()
-  const {
-    selSubjectId,
-    subjects,
-    showToast,
-    catalogueLoading,
-  } = useQuiz()
+  // const {
+  //   selSubjectId,
+  //   subjects,
+  //   showToast,
+  //   catalogueLoading,
+  // } = useQuiz()
+  
+  const { selSubjectId: ctxSubjectId, subjects, showToast, catalogueLoading } = useQuiz()
+const selSubjectId = ctxSubjectId || sessionStorage.getItem('qs_subjectId')
 
   const [loading, setLoading] = useState(true)
   const [exams, setExams] = useState([])
@@ -46,6 +49,12 @@ export default function ExamsDashboardPage() {
     }
     return () => { alive = false }
   }, [selSubjectId, showToast])
+
+  useEffect(() => {
+    if (!catalogueLoading && !selSubjectId) {
+      navigate('/quiz/subject', { replace: true })
+    }
+  }, [catalogueLoading, selSubjectId, navigate])
 
   const subject = useMemo(
     () => subjects.find(s => s._id === selSubjectId),

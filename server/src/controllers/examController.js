@@ -1,5 +1,6 @@
 import Exam from '../models/Exam.js'
 import Question from '../models/Question.js'
+import mongoose from 'mongoose'
 
 function parseDateTime(input) {
   if (!input) return null
@@ -13,42 +14,97 @@ export function isExamPublished(exam) {
 }
 
 /** Student-safe: only exams that have reached publish time */
+// export async function list(req, res, next) {
+//   try {
+//     const { subjectId } = req.query
+//     const now = new Date()
+
+//     const filter = { publishDate: { $lte: now } }
+//     if (subjectId) filter.subjectId = subjectId
+//     // const filter = {}
+// if (subjectId) filter.subjectId = subjectId
+// // Only show exams whose publishDate has passed (UTC day)
+//     filter.publishDate = { $lte: new Date() }
+// //     const todayStart = new Date()
+// // todayStart.setUTCHours(0, 0, 0, 0)
+// //     const filter = { publishDate: { $lte: todayStart } }
+// //     if (subjectId) filter.subjectId = subjectId
+// //     const todayEnd = new Date()
+// // todayEnd.setUTCHours(23, 59, 59, 999)
+// // filter.publishDate = { $lte: todayEnd }
+// // if (subjectId) filter.subjectId = subjectId
+
+//     const exams = await Exam.find(filter)
+//       .sort({ publishDate: -1, createdAt: -1 })
+//       .populate('subjectId', 'name emoji color')
+//       .populate('levelId', 'name short')
+//       .lean()
+
+//     const todayKey = new Date()
+//     const today = new Date(Date.UTC(
+//       todayKey.getUTCFullYear(),
+//       todayKey.getUTCMonth(),
+//       todayKey.getUTCDate(),
+//     ))
+//     const todayISO = today.toISOString().slice(0, 10)
+
+//     const withDerived = exams.map(e => {
+//       const pd = new Date(e.publishDate)
+//       const pdISO = pd.toISOString().slice(0, 10)
+//       return {
+//         _id: e._id,
+//         examName: e.examName,
+//         publishDate: e.publishDate,
+//         isToday: pdISO === todayISO,
+//         subject: e.subjectId ? { _id: e.subjectId._id, name: e.subjectId.name, emoji: e.subjectId.emoji, color: e.subjectId.color } : null,
+//         level: e.levelId ? { _id: e.levelId._id, name: e.levelId.name, short: e.levelId.short } : null,
+//       }
+//     })
+
+//     res.json(withDerived)
+//   } catch (err) { next(err) }
+// }
+
 export async function list(req, res, next) {
   try {
+    // const { subjectId } = req.query
+
+    // const todayEnd = new Date()
+    // todayEnd.setUTCHours(23, 59, 59, 999)
+
+    // const filter = { publishDate: { $lte: todayEnd } }
+    // if (subjectId) filter.subjectId = new mongoose.Types.ObjectId(subjectId)
+
+    // const exams = await Exam.find(filter)
+    //   .sort({ publishDate: -1, createdAt: -1 })
+    //   .populate('subjectId', 'name emoji color')
+    //   .populate('levelId', 'name short')
+    //   .lean()
     const { subjectId } = req.query
-    const now = new Date()
 
-    // const filter = { publishDate: { $lte: now } }
-    // if (subjectId) filter.subjectId = subjectId
-    const filter = {}
-if (subjectId) filter.subjectId = subjectId
-// Only show exams whose publishDate has passed (UTC day)
-filter.publishDate = { $lte: new Date() }
+    const todayEnd = new Date()
+    todayEnd.setUTCHours(23, 59, 59, 999)
 
-    const exams = await Exam.find(filter)
-      .sort({ publishDate: -1, createdAt: -1 })
-      .populate('subjectId', 'name emoji color')
-      .populate('levelId', 'name short')
-      .lean()
+    const filter = { publishDate: { $lte: todayEnd } }
+    if (subjectId) filter.subjectId = subjectId  // mongoose auto-casts strings to ObjectId
 
-    const todayKey = new Date()
-    const today = new Date(Date.UTC(
-      todayKey.getUTCFullYear(),
-      todayKey.getUTCMonth(),
-      todayKey.getUTCDate(),
-    ))
-    const todayISO = today.toISOString().slice(0, 10)
+    console.log('EXAM LIST filter:', JSON.stringify(filter))
+
+    const exams = await Exam.find(filter).lean()
+
+    console.log('EXAM LIST result count:', exams.length)
+
+    const todayISO = new Date().toISOString().slice(0, 10)
 
     const withDerived = exams.map(e => {
-      const pd = new Date(e.publishDate)
-      const pdISO = pd.toISOString().slice(0, 10)
+      const pdISO = new Date(e.publishDate).toISOString().slice(0, 10)
       return {
-        _id: e._id,
-        examName: e.examName,
+        _id:         e._id,
+        examName:    e.examName,
         publishDate: e.publishDate,
-        isToday: pdISO === todayISO,
-        subject: e.subjectId ? { _id: e.subjectId._id, name: e.subjectId.name, emoji: e.subjectId.emoji, color: e.subjectId.color } : null,
-        level: e.levelId ? { _id: e.levelId._id, name: e.levelId.name, short: e.levelId.short } : null,
+        isToday:     pdISO === todayISO,
+        subject:     e.subjectId ? { _id: e.subjectId._id, name: e.subjectId.name, emoji: e.subjectId.emoji, color: e.subjectId.color } : null,
+        level:       e.levelId   ? { _id: e.levelId._id,   name: e.levelId.name,   short: e.levelId.short   } : null,
       }
     })
 
@@ -87,6 +143,8 @@ export async function patchExam(req, res, next) {
     if (publishDate !== undefined) {
       const pd = parseDateTime(publishDate)
       if (!pd) return res.status(400).json({ error: 'publishDate must be a valid date/datetime' })
+      // patch.publishDate = pd
+      pd.setUTCHours(0, 0, 0, 0)
       patch.publishDate = pd
     }
     if (pdfRef !== undefined) patch.pdfRef = String(pdfRef)
@@ -130,7 +188,8 @@ export async function create(req, res, next) {
       subjectId,
       levelId,
       examName: examName.trim(),
-      publishDate: pd,
+      // publishDate: pd,
+      publishDate: (() => { const d = new Date(pd); d.setUTCHours(0,0,0,0); return d })(),
       pdfRef: pdfRef ? String(pdfRef) : '',
     })
 
@@ -232,6 +291,16 @@ export async function findOrCreateExamDoc({ subjectId, levelId, examName, publis
   return exam
 }
 
+export async function getExamQuestionsAdmin(req, res, next) {
+  try {
+    const questions = await Question.find({ examId: req.params.examId })
+      .sort({ createdAt: 1 })
+      .lean()
+    res.json(questions)
+  } catch (err) { next(err) }
+}
+
+
 // DELETE /api/admin/exams/:examId  — removes exam + all its questions
 export async function remove(req, res, next) {
   try {
@@ -257,7 +326,8 @@ export async function update(req, res, next) {
     if (examName)   updates.examName    = examName.trim()
     if (subjectId)  updates.subjectId   = subjectId
     if (levelId)    updates.levelId     = levelId
-    if (pd)         updates.publishDate = pd
+    // if (pd)         updates.publishDate = pd
+    if (pd) { pd.setUTCHours(0,0,0,0); updates.publishDate = pd }
 
     const exam = await Exam.findByIdAndUpdate(examId, updates, { new: true })
     if (!exam) return res.status(404).json({ error: 'Exam not found' })

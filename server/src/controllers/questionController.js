@@ -154,7 +154,8 @@ export async function create(req, res, next) {
       } else {
         const newExam = await Exam.create({
           examName: examName.trim(), subjectId, levelId,
-          publishDate: new Date(Date.UTC(pd.getUTCFullYear(), pd.getUTCMonth(), pd.getUTCDate())),
+          // publishDate: new Date(Date.UTC(pd.getUTCFullYear(), pd.getUTCMonth(), pd.getUTCDate())),
+          publishDate: pd,
         })
         resolvedExamId = newExam._id
       }
@@ -164,7 +165,8 @@ export async function create(req, res, next) {
       subjectId, levelId,
       examId: resolvedExamId,
       examName: examName.trim(),
-      publishDate: new Date(Date.UTC(pd.getUTCFullYear(), pd.getUTCMonth(), pd.getUTCDate())),
+      // publishDate: new Date(Date.UTC(pd.getUTCFullYear(), pd.getUTCMonth(), pd.getUTCDate())),
+      publishDate: pd,
       q, opts, ans,
       marks: marks || 1,
       context: context || '',

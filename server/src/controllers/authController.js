@@ -14,6 +14,7 @@
  */
 import admin    from 'firebase-admin'
 import Settings from '../models/Settings.js'
+import User from '../models/User.js'
 
 /**
  * GET /api/auth/me  [requireAuth]
@@ -66,5 +67,15 @@ export async function getSettings(req, res, next) {
       showExplanation: s?.showExplanation ?? true,
       randomQ:         s?.randomQ         ?? true,
     })
+  } catch (err) { next(err) }
+}
+
+export async function getMyProfile(req, res, next) {
+  try {
+    const user = await User.findOne({ firebaseUid: req.user.uid })
+      .select('hasPurchased emailVerified devices displayName email purchasedAt')
+      .lean()
+    if (!user) return res.json({ hasPurchased: false, emailVerified: false, devices: [] })
+    res.json(user)
   } catch (err) { next(err) }
 }

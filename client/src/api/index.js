@@ -119,5 +119,12 @@ export const adminExamsAPI = {
   list:   (params) => api.get('/admin/exams', { params }),
   create: (data)          => api.post('/admin/exams', data),
   update: (examId, data)  => api.patch(`/admin/exams/${examId}`, data),
-  remove: (examId)        => api.delete(`/admin/exams/${examId}`),
+  remove: (examId) => api.delete(`/admin/exams/${examId}`),
+  listAll:      (params)        => api.get('/admin/exams', { params }),      // no publish filter
+  getQuestions: (examId)        => api.get(`/admin/exams/${examId}/questions`), // no publish gate
+}
+
+export const studentsAPI = {
+  getAll:         (params) => api.get('/admin/students', { params }),
+  updatePurchase: (uid, hasPurchased) => api.patch(`/admin/students/${uid}/purchase`, { hasPurchased }),
 }

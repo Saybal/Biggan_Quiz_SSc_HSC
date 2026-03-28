@@ -5,7 +5,7 @@
  */
 // Change the examsAPI import line in api/index.js — already has examsAPI
 // In AdminPage.jsx, add to the import line:
-import { subjectsAPI, levelsAPI, questionsAPI, resultsAPI, settingsAPI, pdfAPI, adminExamsAPI, examsAPI } from '../../api/index.js'
+import { subjectsAPI, levelsAPI, questionsAPI, resultsAPI, settingsAPI, pdfAPI, adminExamsAPI, examsAPI, studentsAPI } from '../../api/index.js'
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useQuiz } from '../../context/QuizContext.jsx'
@@ -900,7 +900,7 @@ function QuestionsTab() {
   // ── Phase 1: Exam config (filled once) ──
   const [config, setConfig] = useState(null)  // null = not yet configured
   const [configForm, setConfigForm] = useState({
-    subjectId: '', levelId: '', examName: '', publishDate: '', publishTime: '00:00', totalMarks: 10,
+    subjectId: '', levelId: '', examName: '', publishDate: '', totalMarks: 10,
   })
   const [configErr, setConfigErr] = useState('')
 
@@ -910,7 +910,7 @@ function QuestionsTab() {
   const [saveMsg, setSaveMsg] = useState('')
 
   const handleConfigSubmit = () => {
-    const { subjectId, levelId, examName, publishDate, publishTime, totalMarks } = configForm
+    const { subjectId, levelId, examName, publishDate, totalMarks } = configForm
     if (!subjectId)          return setConfigErr('⚠️ বিষয় নির্বাচন করুন')
     if (!levelId)            return setConfigErr('⚠️ Level নির্বাচন করুন')
     if (!examName.trim())    return setConfigErr('⚠️ Exam Name লিখুন')
@@ -952,7 +952,11 @@ function QuestionsTab() {
     setSaving(true); setSaveMsg('')
     try {
       const { subjectId, levelId, examName, publishDate, publishTime } = config
-      const publishDateTime = `${publishDate}T${publishTime || '00:00'}:00`
+      // const publishDateTime = `${publishDate}T${publishTime || '00:00'}:00`
+      // const publishDateTime = new Date(`${publishDate}T${publishTime || '00:00'}:00`).toISOString();
+      // const localDate = new Date(`${publishDate}T${publishTime || '00:00'}:00`)
+      // const publishDateTime = new Date(localDate.getTime() - localDate.getTimezoneOffset() * 60000).toISOString()
+      const publishDateTime = new Date(publishDate).toISOString()
       const res = await adminExamsAPI.create({
         subjectId, levelId, examName,
         publishDate: publishDateTime,
@@ -999,9 +1003,9 @@ function QuestionsTab() {
             <Row label="Publish Date *">
               <Inp type="date" value={configForm.publishDate} onChange={e=>setConfigForm(f=>({...f,publishDate:e.target.value}))}/>
             </Row>
-            <Row label="Publish Time">
+            {/* <Row label="Publish Time">
               <Inp type="time" value={configForm.publishTime} onChange={e=>setConfigForm(f=>({...f,publishTime:e.target.value}))}/>
-            </Row>
+            </Row> */}
           </div>
           {configErr && <p className="text-accent2 text-xs mt-2 text-center">{configErr}</p>}
           <button onClick={handleConfigSubmit}
@@ -1026,7 +1030,7 @@ function QuestionsTab() {
           {subj && <span className="px-2 py-1 rounded-lg font-bold" style={{color:subj.color,background:`${subj.color}18`}}>{subj.emoji} {subj.name}</span>}
           {lvl  && <span className="px-2 py-1 rounded-full text-purple bg-purple/10 border border-purple/30">{lvl.name}</span>}
           <span className="text-textprimary font-bold">📝 {config.examName}</span>
-          <span className="text-muted">📅 {config.publishDate} {config.publishTime}</span>
+          <span className="text-muted">📅 {config.publishDate}</span>
           <span className="text-muted">🎯 {config.totalMarks} marks</span>
         </div>
         <Btn variant="outline" onClick={()=>{setConfig(null);setSlots([])}}>✏️ Edit Config</Btn>
@@ -1103,7 +1107,7 @@ function PdfTab() {
   const [subjId,     setSubjId]     = useState('')
   const [lvlId,      setLvlId]      = useState('')
   const [examName,   setExamName]   = useState('')
-  const [publishAt,  setPublishAt]  = useState('')
+  const [publishDate,  setPublishDate]  = useState('')
   const [pdfRef,     setPdfRef]     = useState('')
   const [parsing,    setParsing]    = useState(false)
   const [parsed,     setParsed]     = useState(null)   // extracted questions
@@ -1120,8 +1124,8 @@ function PdfTab() {
     if (!subjId)   { setParseErr('বিষয় select করুন'); return }
     if (!lvlId)    { setParseErr('Level select করুন'); return }
     if (!examName.trim()) { setParseErr('Exam Name লিখুন'); return }
-    if (!publishAt?.trim()) { setParseErr('প্রকাশের তারিখ ও সময় নির্বাচন করুন'); return }
-    if (Number.isNaN(new Date(publishAt).getTime())) { setParseErr('প্রকাশের সময় সঠিক নয়'); return }
+    if (!publishDate?.trim()) { setParseErr('প্রকাশের তারিখ নির্বাচন করুন'); return }
+    // if (Number.isNaN(new Date(publishDate).getTime())) { setParseErr('প্রকাশের সময় সঠিক নয়'); return }
     setParsing(true); setParseErr(''); setParsed(null); setSaveMsg('')
     try {
       const res = await pdfAPI.parse(file)
@@ -1159,8 +1163,16 @@ function PdfTab() {
     if (!parsed?.length) return
     setSaving(true); setSaveMsg('')
     try {
-      const pub = new Date(publishAt)
-      if (Number.isNaN(pub.getTime())) {
+      // const pub = new Date(publishDate)
+      // const pub = new Date(publishDate.length === 16 ? publishDate + ':00' : publishDate)
+      // const pub = new Date(publishDate.includes('Z') ? publishDate : publishDate + '+06:00')
+      // if (Number.isNaN(pub.getTime()))
+//       const pub = new Date(publishDate)   // datetime-local is already local time
+      // const pubUTC = new Date(pub.getTime() - pub.getTimezoneOffset() * 60000)
+     
+      // publishDate: new Date(publishDate).toISOString()
+if (Number.isNaN(pubUTC.getTime()))
+      {
         setSaveMsg('❌ প্রকাশের সময় সঠিক নয়')
         setSaving(false)
         return
@@ -1169,7 +1181,7 @@ function PdfTab() {
         subjectId: subjId,
         levelId: lvlId,
         examName,
-        publishDate: pub.toISOString(),
+        publishDate: new Date(publishDate).toISOString(),
         pdfRef: pdfRef.trim() || (file ? `pdf:${file.name}` : ''),
         questions: parsed,
       })
@@ -1223,11 +1235,11 @@ function PdfTab() {
             />
           </div>
           <div className="col-span-2 sm:col-span-1">
-            <label className="block text-muted text-xs mb-1">প্রকাশের তারিখ ও সময় *</label>
+            <label className="block text-muted text-xs mb-1">প্রকাশের তারিখ</label>
             <input
-              type="datetime-local"
-              value={publishAt}
-              onChange={e => setPublishAt(e.target.value)}
+              type="date"
+              value={publishDate}
+              onChange={e => setPublishDate(e.target.value)}
               className="w-full bg-card2 border-[1.5px] border-border rounded-xl px-3.5 py-2.5 text-textprimary font-body text-sm outline-none transition focus:border-accent placeholder-muted"
             />
           </div>
@@ -1274,7 +1286,7 @@ function PdfTab() {
           )}
         </div>
 
-        <button onClick={handleParse} disabled={parsing||!file||!subjId||!lvlId||!examName.trim()||!publishAt}
+        <button onClick={handleParse} disabled={parsing||!file||!subjId||!lvlId||!examName.trim()||!publishDate}
           className="mt-3 w-full py-3 rounded-xl font-display font-bold text-sm text-white transition hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ background:'linear-gradient(135deg,#38b2f5,var(--purple))' }}>
           {parsing ? (
@@ -1469,7 +1481,7 @@ function PdfTab() {
 //       opts: [...q.opts],
 //       ans: q.ans,
 //       examName: q.examName || '',
-//       publishAt: toDatetimeLocalValue(q.publishDate),
+//       publishDate: toDatetimeLocalValue(q.publishDate),
 //       marks: q.marks || 1,
 //       difficulty: q.difficulty || 'medium',
 //       explanation: q.explanation || '',
@@ -1740,7 +1752,8 @@ function CollectionTab() {
 
   const loadExams = useCallback(async (subjId) => {
     if (!subjId) { setExams([]); setFExam(''); setQs([]); return }
-    try { const r = await examsAPI.list({ subjectId: subjId }); setExams(r.data) } catch {}
+    // try { const r = await examsAPI.list({ subjectId: subjId }); setExams(r.data) } catch {}
+    try { const r = await adminExamsAPI.listAll({ subjectId: subjId }); setExams(r.data) } catch {}
   }, [])
 
   useEffect(() => { loadExams(fSubj) }, [fSubj, loadExams])
@@ -1748,7 +1761,7 @@ function CollectionTab() {
   useEffect(() => {
     if (!fExam) { setQs([]); return }
     setLoading(true)
-    examsAPI.getQuestions(fExam).then(r => setQs(r.data)).catch(()=>{}).finally(()=>setLoading(false))
+    adminExamsAPI.getQuestions(fExam).then(r => setQs(r.data)).catch(()=>{}).finally(()=>setLoading(false))
   }, [fExam])
 
   const selectedExam = exams.find(e => e._id === fExam)
@@ -1773,7 +1786,7 @@ function CollectionTab() {
       subjectId:   selectedExam.subject?._id  || fSubj,
       levelId:     selectedExam.level?._id    || '',
       publishDate: selectedExam.publishDate
-        ? new Date(selectedExam.publishDate).toISOString().slice(0, 16)  // datetime-local format
+        ? new Date(examEditForm.publishDate).toISOString()  
         : '',
     })
     setExamEditErr('')
@@ -1794,7 +1807,7 @@ function CollectionTab() {
       setExamEditOpen(false)
       loadExams(fSubj)
       // Refresh questions too (publishDate may have changed)
-      const r = await examsAPI.getQuestions(fExam)
+      const r = await adminExamsAPI.getQuestions(fExam)
       setQs(r.data)
     } catch { setExamEditErr('❌ আপডেট হয়নি') }
   }
@@ -1812,7 +1825,7 @@ function CollectionTab() {
     try {
       await questionsAPI.update(editQId, editQForm)
       showToast('✅ আপডেট!', 'correct-t')
-      const r = await examsAPI.getQuestions(fExam)
+      const r = await adminExamsAPI.getQuestions(fExam)
       setQs(r.data); setEditQId(null)
     } catch { setQErr('❌ সংরক্ষণ হয়নি') }
   }
@@ -1921,8 +1934,8 @@ function CollectionTab() {
             {levels.map(l=><option key={l._id} value={l._id}>{l.name}</option>)}
           </Sel>
         </Row>
-        <Row label="Publish Date & Time *">
-          <Inp type="datetime-local" value={examEditForm.publishDate||''} onChange={e=>setExamEditForm(f=>({...f,publishDate:e.target.value}))}/>
+        <Row label="Publish Date">
+          <Inp type="date" value={examEditForm.publishDate ? examEditForm.publishDate.slice(0,10) : ''} onChange={e=>setExamEditForm(f=>({...f,publishDate:e.target.value}))}/>
         </Row>
         {examEditErr && <p className="text-accent2 text-xs mb-2 text-center">{examEditErr}</p>}
         <div className="flex gap-2 mt-4">
@@ -1930,6 +1943,101 @@ function CollectionTab() {
           <button onClick={()=>setExamEditOpen(false)} className="flex-1 py-2.5 rounded-xl font-display font-semibold text-sm text-muted border border-border">বাতিল</button>
         </div>
       </Modal>
+    </div>
+  )
+}
+
+function StudentsTab() {
+  const { showToast } = useQuiz()
+  const [students, setStudents]   = useState([])
+  const [loading,  setLoading]    = useState(false)
+  const [search,   setSearch]     = useState('')
+  const [filter,   setFilter]     = useState('')   // '' | 'true' | 'false'
+  const [toggling, setToggling]   = useState(null) // uid being toggled
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const params = {}
+      if (search.trim()) params.email = search.trim()
+      if (filter !== '')  params.hasPurchased = filter
+      const r = await studentsAPI.getAll(params)
+      setStudents(r.data)
+    } catch { showToast('লোড হয়নি', 'wrong-t') }
+    setLoading(false)
+  }, [search, filter]) // eslint-disable-line
+
+  useEffect(() => { load() }, [load])
+
+  const handleToggle = async (student) => {
+    const next = !student.hasPurchased
+    if (!confirm(`"${student.email}" এর Purchase status ${next ? 'সক্রিয়' : 'নিষ্ক্রিয়'} করবো?`)) return
+    setToggling(student.firebaseUid)
+    try {
+      await studentsAPI.updatePurchase(student.firebaseUid, next)
+      showToast(next ? '✅ Purchase সক্রিয় করা হয়েছে' : '⚠️ Purchase নিষ্ক্রিয় করা হয়েছে', next ? 'correct-t' : 'wrong-t')
+      load()
+    } catch { showToast('❌ আপডেট হয়নি', 'wrong-t') }
+    setToggling(null)
+  }
+
+  return (
+    <div>
+      <div className="font-display font-bold text-sm mb-3">👥 Student Data</div>
+      <div className="flex flex-wrap gap-2 mb-4">
+        <Inp
+          className="flex-1 min-w-[180px]"
+          placeholder="ইমেইল দিয়ে খুঁজুন…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+        <Sel className="w-auto text-xs py-1.5 px-2.5" value={filter} onChange={e=>setFilter(e.target.value)}>
+          <option value="">— সব Student —</option>
+          <option value="true">✅ Purchased</option>
+          <option value="false">❌ Not Purchased</option>
+        </Sel>
+      </div>
+
+      {loading && <div className="py-8 text-center text-muted text-sm animate-pulse">লোড হচ্ছে…</div>}
+
+      {!loading && students.length === 0 && (
+        <div className="py-8 text-center text-muted text-sm"><div className="text-3xl mb-2">👤</div>কোনো Student নেই</div>
+      )}
+
+      <div className="flex flex-col gap-2">
+        {students.map(s => (
+          <div key={s.firebaseUid} className="bg-card border border-border rounded-xl px-3.5 py-3 flex flex-wrap gap-3 items-center justify-between">
+            <div className="flex-1 min-w-0">
+              <div className="font-semibold text-textprimary text-sm truncate">{s.displayName || '—'}</div>
+              <div className="text-muted text-xs truncate">{s.email}</div>
+              <div className="flex flex-wrap gap-2 mt-1">
+                <span className={`text-[.65rem] px-1.5 py-0.5 rounded-full border ${s.emailVerified?'border-green/40 text-green bg-green/8':'border-accent2/40 text-accent2 bg-accent2/8'}`}>
+                  {s.emailVerified ? '✅ Verified' : '❌ Unverified'}
+                </span>
+                <span className="text-[.65rem] px-1.5 py-0.5 rounded-full border border-border text-muted">
+                  📱 {s.devices?.length || 0} device{s.devices?.length !== 1 ? 's' : ''}
+                </span>
+                {s.purchasedAt && (
+                  <span className="text-[.65rem] px-1.5 py-0.5 rounded-full border border-border text-muted">
+                    📅 {new Date(s.purchasedAt).toLocaleDateString('bn-BD')}
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${s.hasPurchased?'bg-green/15 text-green':'bg-accent2/15 text-accent2'}`}>
+                {s.hasPurchased ? '✅ Purchased' : '❌ Not Purchased'}
+              </span>
+              <button
+                onClick={() => handleToggle(s)}
+                disabled={toggling === s.firebaseUid}
+                className={`text-xs font-display font-bold px-3 py-1.5 rounded-lg border transition hover:-translate-y-0.5 disabled:opacity-50 ${s.hasPurchased?'border-accent2/40 text-accent2':'border-green/40 text-green'}`}>
+                {toggling === s.firebaseUid ? '⏳' : s.hasPurchased ? 'Revoke' : 'Approve'}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
@@ -2017,7 +2125,8 @@ const TABS = [
   { id:'questions', label:'📝 Questions' },
   { id:'pdf',       label:'📄 PDF Upload' },
   { id:'collection', label:'📚 Collection' },
-  { id:'settings',  label:'⚙️ Settings' },
+  { id: 'settings', label: '⚙️ Settings' },
+  { id:'students', label:'👥 Students' },
 ]
 
 export default function AdminPage() {
@@ -2037,6 +2146,7 @@ export default function AdminPage() {
     questions:  <QuestionsTab />,
     pdf:        <PdfTab />,
     collection: <CollectionTab />,
+    students: <StudentsTab />,
     settings:   <SettingsTab />,
   }
 

@@ -15,6 +15,7 @@ import React, {
 } from 'react'
 import { subjectsAPI, levelsAPI, questionsAPI, settingsAPI } from '../api/index.js'
 import { useFirebaseAuth } from '../hooks/useFirebaseAuth.js'
+import api from '../api/axios.js'
 
 const QuizContext = createContext(null)
 
@@ -28,7 +29,7 @@ export function QuizProvider({ children }) {
 
   const isAdminAuthed = role === 'admin'
 
-  // const t = settingsAPI.get()
+  const [dbUser, setDbUser] = useState(null)
 
   // ── Catalogue ─────────────────────────────────────────────────────────────
   const [subjects,  setSubjects]  = useState([])
@@ -82,6 +83,13 @@ export function QuizProvider({ children }) {
     }
   }, [])
 
+  useEffect(() => {
+    if (!user) { setDbUser(null); return }
+    api.get('/auth/me/profile')
+      .then(r => setDbUser(r.data))
+      .catch(() => setDbUser(null))
+  }, [user])
+
   useEffect(() => { loadCatalogue() }, [loadCatalogue])
 
   const refreshSubjects  = async () => { const r = await subjectsAPI.getAll();  setSubjects(r.data) }
@@ -117,6 +125,8 @@ export function QuizProvider({ children }) {
 
       // ── UI ────────────────────────────────────────────────────────────────
       toast, showToast,
+
+      dbUser
     }}>
       {children}
     </QuizContext.Provider>
