@@ -87,7 +87,8 @@ export const examsAPI = {
   submitAttempt: (data) => api.post('/exams/attempts', data),
   attemptStatus: (examId) => api.get(`/exams/${examId}/attempt-status`),
   myExamMerit:   (examId) => api.get(`/exams/${examId}/merit`),
-  overallMerit:  ()       => api.get('/merit/overall'),
+  overallMerit: () => api.get('/merit/overall'),
+  examLeaderboard: (examId) => api.get(`/exams/${examId}/leaderboard`),
 }
 
 // ═══════════════════════════════════════════════════════════════

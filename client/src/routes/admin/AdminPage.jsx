@@ -5,56 +5,147 @@
  */
 // Change the examsAPI import line in api/index.js — already has examsAPI
 // In AdminPage.jsx, add to the import line:
-import { subjectsAPI, levelsAPI, questionsAPI, resultsAPI, settingsAPI, pdfAPI, adminExamsAPI, examsAPI, studentsAPI } from '../../api/index.js'
-import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { Link, useNavigate } from 'react-router'
-import { useQuiz } from '../../context/QuizContext.jsx'
+import {
+  subjectsAPI,
+  levelsAPI,
+  questionsAPI,
+  resultsAPI,
+  settingsAPI,
+  pdfAPI,
+  adminExamsAPI,
+  examsAPI,
+  studentsAPI,
+} from "../../api/index.js";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { Link, useNavigate } from "react-router";
+import { useQuiz } from "../../context/QuizContext.jsx";
 // import { subjectsAPI, levelsAPI, questionsAPI, resultsAPI, settingsAPI, pdfAPI, adminExamsAPI } from '../../api/index.js'
 import Swal from "sweetalert2";
 
 function toDatetimeLocalValue(isoOrDate) {
-  if (!isoOrDate) return ''
-  const x = new Date(isoOrDate)
-  if (Number.isNaN(x.getTime())) return ''
-  const p = n => String(n).padStart(2, '0')
-  return `${x.getFullYear()}-${p(x.getMonth() + 1)}-${p(x.getDate())}T${p(x.getHours())}:${p(x.getMinutes())}`
+  if (!isoOrDate) return "";
+  const x = new Date(isoOrDate);
+  if (Number.isNaN(x.getTime())) return "";
+  const p = (n) => String(n).padStart(2, "0");
+  return `${x.getFullYear()}-${p(x.getMonth() + 1)}-${p(x.getDate())}T${p(x.getHours())}:${p(x.getMinutes())}`;
 }
 
 // ── Shared UI micro-components ────────────────────────────────────────────────
-const EMOJIS = ['🧮','📐','🔬','⚗️','🧪','🌍','📖','🖊️','🧬','💡','🔭','📊','🏛️','🌿','🩺','💻','🎨','🎵','⚽','🌏','🧑‍🔬','📝','🔢','🏫','🎓']
-const LETTERS = ['ক','খ','গ','ঘ']
-const scoreCls = pct => pct>=70?'bg-green/15 text-green':pct>=40?'bg-accent/15 text-accent':'bg-accent2/15 text-accent2'
+const EMOJIS = [
+  "🧮",
+  "📐",
+  "🔬",
+  "⚗️",
+  "🧪",
+  "🌍",
+  "📖",
+  "🖊️",
+  "🧬",
+  "💡",
+  "🔭",
+  "📊",
+  "🏛️",
+  "🌿",
+  "🩺",
+  "💻",
+  "🎨",
+  "🎵",
+  "⚽",
+  "🌏",
+  "🧑‍🔬",
+  "📝",
+  "🔢",
+  "🏫",
+  "🎓",
+];
+const LETTERS = ["ক", "খ", "গ", "ঘ"];
+const scoreCls = (pct) =>
+  pct >= 70
+    ? "bg-green/15 text-green"
+    : pct >= 40
+      ? "bg-accent/15 text-accent"
+      : "bg-accent2/15 text-accent2";
 
-function Inp({ className='', ...p }) {
-  return <input className={`w-full bg-card2 border-[1.5px] border-border rounded-xl px-3.5 py-2.5 text-textprimary font-body text-sm outline-none transition focus:border-accent placeholder-muted ${className}`} {...p}/>
-}
-function Sel({ className='', ...p }) {
-  return <select className={`w-full bg-card2 border-[1.5px] border-border rounded-xl px-3 py-2 text-textprimary font-body text-sm outline-none cursor-pointer focus:border-accent ${className}`} {...p}/>
-}
-function Btn({ variant='outline', children, ...p }) {
-  const v = {
-    green:  { cls:'border-transparent text-[#0d1a10]',         bg:'linear-gradient(135deg,#43e97b,#38b2f5)' },
-    blue:   { cls:'border-transparent text-white',             bg:'linear-gradient(135deg,#38b2f5,#6c63ff)' },
-    purple: { cls:'border-transparent text-white',             bg:'linear-gradient(135deg,#a78bfa,#6c63ff)' },
-    accent: { cls:'border-transparent text-[#1a1200]',         bg:'linear-gradient(135deg,var(--accent),#ff9f43)' },
-    danger: { cls:'border-accent2/40 text-accent2 bg-transparent', bg:'none' },
-    outline:{ cls:'border-border text-muted bg-transparent hover:border-accent hover:text-accent', bg:'none' },
-  }[variant] || { cls:'border-border text-muted bg-transparent', bg:'none' }
-  return <button className={`inline-flex items-center gap-1 px-3 py-1.5 text-xs font-display font-bold rounded-lg border transition hover:-translate-y-0.5 cursor-pointer ${v.cls}`} style={{ background:v.bg }} {...p}>{children}</button>
-}
-function Modal({ open, onClose, title, size='md', children }) {
-  if (!open) return null
+function Inp({ className = "", ...p }) {
   return (
-    <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-3.5" onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div className={`bg-card border border-border rounded-card p-5 w-full shadow-[0_16px_64px_rgba(0,0,0,.6)] max-h-[92vh] overflow-y-auto screen-animate ${size==='sm'?'max-w-[400px]':'max-w-[560px]'}`}>
-        <div className="font-display font-bold text-[1.15rem] text-accent mb-4">{title}</div>
+    <input
+      className={`w-full bg-card2 border-[1.5px] border-border rounded-xl px-3.5 py-2.5 text-textprimary font-body text-sm outline-none transition focus:border-accent placeholder-muted ${className}`}
+      {...p}
+    />
+  );
+}
+function Sel({ className = "", ...p }) {
+  return (
+    <select
+      className={`w-full bg-card2 border-[1.5px] border-border rounded-xl px-3 py-2 text-textprimary font-body text-sm outline-none cursor-pointer focus:border-accent ${className}`}
+      {...p}
+    />
+  );
+}
+function Btn({ variant = "outline", children, ...p }) {
+  const v = {
+    green: {
+      cls: "border-transparent text-[#0d1a10]",
+      bg: "linear-gradient(135deg,#43e97b,#38b2f5)",
+    },
+    blue: {
+      cls: "border-transparent text-white",
+      bg: "linear-gradient(135deg,#38b2f5,#6c63ff)",
+    },
+    purple: {
+      cls: "border-transparent text-white",
+      bg: "linear-gradient(135deg,#a78bfa,#6c63ff)",
+    },
+    accent: {
+      cls: "border-transparent text-[#1a1200]",
+      bg: "linear-gradient(135deg,var(--accent),#ff9f43)",
+    },
+    danger: {
+      cls: "border-accent2/40 text-accent2 bg-transparent",
+      bg: "none",
+    },
+    outline: {
+      cls: "border-border text-muted bg-transparent hover:border-accent hover:text-accent",
+      bg: "none",
+    },
+  }[variant] || { cls: "border-border text-muted bg-transparent", bg: "none" };
+  return (
+    <button
+      className={`inline-flex items-center gap-1 px-3 py-1.5 text-xs font-display font-bold rounded-lg border transition hover:-translate-y-0.5 cursor-pointer ${v.cls}`}
+      style={{ background: v.bg }}
+      {...p}
+    >
+      {children}
+    </button>
+  );
+}
+function Modal({ open, onClose, title, size = "md", children }) {
+  if (!open) return null;
+  return (
+    <div
+      className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-3.5"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div
+        className={`bg-card border border-border rounded-card p-5 w-full shadow-[0_16px_64px_rgba(0,0,0,.6)] max-h-[92vh] overflow-y-auto screen-animate ${size === "sm" ? "max-w-[400px]" : "max-w-[560px]"}`}
+      >
+        <div className="font-display font-bold text-[1.15rem] text-accent mb-4">
+          {title}
+        </div>
         {children}
       </div>
     </div>
-  )
+  );
 }
 function Row({ label, children }) {
-  return <div className="mb-3"><label className="block text-muted text-xs font-medium mb-1.5">{label}</label>{children}</div>
+  return (
+    <div className="mb-3">
+      <label className="block text-muted text-xs font-medium mb-1.5">
+        {label}
+      </label>
+      {children}
+    </div>
+  );
 }
 
 // ── Results Tab ───────────────────────────────────────────────────────────────
@@ -169,7 +260,7 @@ function Row({ label, children }) {
 
 //   // Helper functions (same as LeaderboardPage)
 //   const rankIcon = r => r === 1 ? '🥇' : r === 2 ? '🥈' : r === 3 ? '🥉' : null
-//   const rankCls  = r => 
+//   const rankCls  = r =>
 //     r === 1 ? 'text-accent text-xl font-extrabold' :
 //     r === 2 ? 'text-[#bdc3d4] font-bold' :
 //     r === 3 ? 'text-[#cd7f32] font-bold' :
@@ -208,7 +299,7 @@ function Row({ label, children }) {
 
 //       {/* Leaderboard-style Table */}
 //       <div className="bg-card border border-border rounded-card overflow-hidden">
-//         <div 
+//         <div
 //           className="grid text-muted text-xs font-semibold uppercase tracking-wide px-4 py-3 bg-card2 border-b border-border"
 //           style={{ gridTemplateColumns: '52px 1fr 140px 140px' }}
 //         >
@@ -308,7 +399,7 @@ function Row({ label, children }) {
 
 //   // Same helpers as LeaderboardPage
 //   const rankIcon = r => r === 1 ? '🥇' : r === 2 ? '🥈' : r === 3 ? '🥉' : null
-//   const rankCls  = r => 
+//   const rankCls  = r =>
 //     r === 1 ? 'text-accent text-xl font-extrabold' :
 //     r === 2 ? 'text-[#bdc3d4] font-bold' :
 //     r === 3 ? 'text-[#cd7f32] font-bold' :
@@ -349,7 +440,7 @@ function Row({ label, children }) {
 
 //       {/* Leaderboard Table - Exact same style as LeaderboardPage */}
 //       <div className="bg-card border border-border rounded-card overflow-hidden">
-//         <div 
+//         <div
 //           className="grid text-muted text-xs font-semibold uppercase tracking-wide px-4 py-2.5 bg-card2 border-b border-border"
 //           style={{ gridTemplateColumns: '52px 1fr 140px 140px' }}
 //         >
@@ -411,36 +502,44 @@ function Row({ label, children }) {
 // }
 
 function ResultsTab() {
-  const { subjects, levels, showToast } = useQuiz()
-  const [data,      setData]     = useState({ results:[], stats:{} })
-  const [fSubj,     setFSubj]    = useState('')
-  const [fLvl,      setFLvl]     = useState('')
-  const [loading,   setLoading]  = useState(true)
-  const [detail,    setDetail]   = useState(null)   // selected attempt for modal
-  const [detailLoading, setDL]   = useState(false)
+  const { subjects, levels, showToast } = useQuiz();
+  const [data, setData] = useState({ results: [], stats: {} });
+  const [fSubj, setFSubj] = useState("");
+  const [fLvl, setFLvl] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [detail, setDetail] = useState(null); // selected attempt for modal
+  const [detailLoading, setDL] = useState(false);
 
   const load = useCallback(async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const params = {}
-      if (fSubj) params.subjectId = fSubj
-      if (fLvl)  params.levelId   = fLvl
-      const r = await resultsAPI.getAll(params)
-      setData(r.data)
-    } catch { showToast('Results লোড হয়নি','wrong-t') }
-    setLoading(false)
-  }, [fSubj, fLvl])
+      const params = {};
+      if (fSubj) params.subjectId = fSubj;
+      if (fLvl) params.levelId = fLvl;
+      const r = await resultsAPI.getAll(params);
+      setData(r.data);
+    } catch {
+      showToast("Results লোড হয়নি", "wrong-t");
+    }
+    setLoading(false);
+  }, [fSubj, fLvl]);
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const openDetail = async (row) => {
-    setDL(true); setDetail({ loading: true, row })
+    setDL(true);
+    setDetail({ loading: true, row });
     try {
-      const r = await resultsAPI.getDetail(row._id)
-      setDetail({ loading: false, row, data: r.data })
-    } catch { showToast('Detail লোড হয়নি','wrong-t'); setDetail(null) }
-    setDL(false)
-  }
+      const r = await resultsAPI.getDetail(row._id);
+      setDetail({ loading: false, row, data: r.data });
+    } catch {
+      showToast("Detail লোড হয়নি", "wrong-t");
+      setDetail(null);
+    }
+    setDL(false);
+  };
 
   // const handleClear = async () => {
   //   if (!confirm('সব Result মুছে ফেলবো?')) return
@@ -449,251 +548,514 @@ function ResultsTab() {
   //   load()
   // }
 
-const handleClear = async () => {
-  const result = await Swal.fire({
-    title: "আপনি কি নিশ্চিত?",
-    text: "সব Result মুছে ফেলবো?",
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonColor: "#3085d6",
-    cancelButtonColor: "#d33",
-    confirmButtonText: "Yes, delete it!",
-    cancelButtonText: "Cancel",
-    theme: "bootstrap-5-dark"
-  });
+  const handleClear = async () => {
+    const result = await Swal.fire({
+      title: "আপনি কি নিশ্চিত?",
+      text: "সব Result মুছে ফেলবো?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!",
+      cancelButtonText: "Cancel",
+      theme: "bootstrap-5-dark",
+    });
 
-  if (!result.isConfirmed) return;
+    if (!result.isConfirmed) return;
 
-  await resultsAPI.clearAll();
+    await resultsAPI.clearAll();
 
-  await Swal.fire({
-    title: "Deleted!",
-    text: "সব Result মুছে ফেলা হয়েছে",
-    icon: "success",
-     theme: "bootstrap-5-dark"
-  });
+    await Swal.fire({
+      title: "Deleted!",
+      text: "সব Result মুছে ফেলা হয়েছে",
+      icon: "success",
+      theme: "bootstrap-5-dark",
+    });
 
-  showToast('🗑️ মুছা হয়েছে','wrong-t');
-  load();
-};
+    showToast("🗑️ মুছা হয়েছে", "wrong-t");
+    load();
+  };
 
-  const re = ['🥇','🥈','🥉']
-  const { results=[], stats={} } = data
+  const re = ["🥇", "🥈", "🥉"];
+  const { results = [], stats = {} } = data;
 
   return (
     <div>
       <div className="flex gap-2 mb-3 flex-wrap">
-        <Sel className="w-auto text-xs py-1.5 px-2.5" value={fSubj} onChange={e=>setFSubj(e.target.value)}>
+        <Sel
+          className="w-auto text-xs py-1.5 px-2.5"
+          value={fSubj}
+          onChange={(e) => setFSubj(e.target.value)}
+        >
           <option value="">— সব বিষয় —</option>
-          {subjects.map(s=><option key={s._id} value={s._id}>{s.emoji} {s.name}</option>)}
+          {subjects.map((s) => (
+            <option key={s._id} value={s._id}>
+              {s.emoji} {s.name}
+            </option>
+          ))}
         </Sel>
-        <Sel className="w-auto text-xs py-1.5 px-2.5" value={fLvl} onChange={e=>setFLvl(e.target.value)}>
+        <Sel
+          className="w-auto text-xs py-1.5 px-2.5"
+          value={fLvl}
+          onChange={(e) => setFLvl(e.target.value)}
+        >
           <option value="">— সব Level —</option>
-          {levels.map(l=><option key={l._id} value={l._id}>{l.name}</option>)}
+          {levels.map((l) => (
+            <option key={l._id} value={l._id}>
+              {l.name}
+            </option>
+          ))}
         </Sel>
       </div>
       <div className="grid grid-cols-3 gap-2.5 mb-4">
-        {[{num:stats.total||0,lbl:'মোট Participant'},{num:stats.avg?stats.avg+'%':'-',lbl:'গড় নম্বর'},{num:stats.topScore?`${stats.topScore}/${stats.topFull}`:'-',lbl:'সর্বোচ্চ'}].map(s=>(
-          <div key={s.lbl} className="bg-card border border-border rounded-xl p-3 text-center">
-            <div className="font-display font-extrabold text-[1.7rem] text-accent">{s.num}</div>
+        {[
+          { num: stats.total || 0, lbl: "মোট Participant" },
+          { num: stats.avg ? stats.avg + "%" : "-", lbl: "গড় নম্বর" },
+          {
+            num: stats.topScore ? `${stats.topScore}/${stats.topFull}` : "-",
+            lbl: "সর্বোচ্চ",
+          },
+        ].map((s) => (
+          <div
+            key={s.lbl}
+            className="bg-card border border-border rounded-xl p-3 text-center"
+          >
+            <div className="font-display font-extrabold text-[1.7rem] text-accent">
+              {s.num}
+            </div>
             <div className="text-muted text-xs mt-0.5">{s.lbl}</div>
           </div>
         ))}
       </div>
       <div className="bg-card border border-border rounded-xl overflow-hidden">
-        <div className="grid text-muted text-xs font-semibold uppercase tracking-wide px-3.5 py-2 bg-card2 border-b border-border" style={{gridTemplateColumns:'30px 1fr 80px 68px 100px 72px 72px'}}>
-          <div>#</div><div>নাম</div><div>বিষয়</div><div>Level</div><div>নম্বর</div><div className="text-right">সময়</div><div className="text-right">বিস্তারিত</div>
+        <div
+          className="grid text-muted text-xs font-semibold uppercase tracking-wide px-3.5 py-2 bg-card2 border-b border-border"
+          style={{ gridTemplateColumns: "30px 1fr 80px 68px 100px 72px 72px" }}
+        >
+          <div>#</div>
+          <div>নাম</div>
+          <div>বিষয়</div>
+          <div>Level</div>
+          <div>নম্বর</div>
+          <div className="text-right">সময়</div>
+          <div className="text-right">বিস্তারিত</div>
         </div>
-        {loading ? <div className="py-8 text-center text-muted text-sm animate-pulse">লোড হচ্ছে…</div>
-        : results.length===0 ? <div className="py-8 text-center text-muted text-sm"><div className="text-3xl mb-2">📭</div>কোনো Result নেই</div>
-        : results.map((p,i)=>(
-          <div key={p._id} className="grid px-3.5 py-2.5 border-b border-border last:border-0 items-center text-sm hover:bg-accent/3" style={{gridTemplateColumns:'30px 1fr 80px 68px 100px 72px 72px'}}>
-            <div className={`font-display font-bold ${i<3?'text-accent':'text-muted'}`}>{i<3?re[i]:i+1}</div>
-            <div>
-              <div className="font-semibold text-textprimary text-[.88rem]">{p.name}</div>
-              {p.school&&<div className="text-muted text-[.72rem]">🏛️ {p.school}</div>}
-              {p.examName&&<div className="text-muted text-[.68rem]">📝 {p.examName}</div>}
-            </div>
-            <div className="text-xs text-muted">{p.subjectEmoji} {p.subjectName}</div>
-            <div><span className="text-xs text-purple bg-purple/10 border border-purple/30 px-2 py-0.5 rounded-full">{p.levelShort||p.levelName}</span></div>
-            <div><span className={`text-xs font-bold px-2 py-0.5 rounded-full ${scoreCls(p.pct)}`}>{p.score}/{p.fullMarks} ({p.pct}%)</span></div>
-            <div className="text-blue text-xs text-right">{p.timeStr}</div>
-            <div className="text-right"><Btn variant="blue" onClick={()=>openDetail(p)}>🔍 Details</Btn></div>
+        {loading ? (
+          <div className="py-8 text-center text-muted text-sm animate-pulse">
+            লোড হচ্ছে…
           </div>
-        ))}
+        ) : results.length === 0 ? (
+          <div className="py-8 text-center text-muted text-sm">
+            <div className="text-3xl mb-2">📭</div>কোনো Result নেই
+          </div>
+        ) : (
+          results.map((p, i) => (
+            <div
+              key={p._id}
+              className="grid px-3.5 py-2.5 border-b border-border last:border-0 items-center text-sm hover:bg-accent/3"
+              style={{
+                gridTemplateColumns: "30px 1fr 80px 68px 100px 72px 72px",
+              }}
+            >
+              <div
+                className={`font-display font-bold ${i < 3 ? "text-accent" : "text-muted"}`}
+              >
+                {i < 3 ? re[i] : i + 1}
+              </div>
+              <div>
+                <div className="font-semibold text-textprimary text-[.88rem]">
+                  {p.name}
+                </div>
+                {p.school && (
+                  <div className="text-muted text-[.72rem]">🏛️ {p.school}</div>
+                )}
+                {p.examName && (
+                  <div className="text-muted text-[.68rem]">
+                    📝 {p.examName}
+                  </div>
+                )}
+              </div>
+              <div className="text-xs text-muted">
+                {p.subjectEmoji} {p.subjectName}
+              </div>
+              <div>
+                <span className="text-xs text-purple bg-purple/10 border border-purple/30 px-2 py-0.5 rounded-full">
+                  {p.levelShort || p.levelName}
+                </span>
+              </div>
+              <div>
+                <span
+                  className={`text-xs font-bold px-2 py-0.5 rounded-full ${scoreCls(p.pct)}`}
+                >
+                  {p.score}/{p.fullMarks} ({p.pct}%)
+                </span>
+              </div>
+              <div className="text-blue text-xs text-right">{p.timeStr}</div>
+              <div className="text-right">
+                <Btn variant="blue" onClick={() => openDetail(p)}>
+                  🔍 Details
+                </Btn>
+              </div>
+            </div>
+          ))
+        )}
       </div>
-      <div className="mt-3"><Btn variant="danger" onClick={handleClear}>🗑️ সব Result মুছুন</Btn></div>
+      <div className="mt-3">
+        <Btn variant="danger" onClick={handleClear}>
+          🗑️ সব Result মুছুন
+        </Btn>
+      </div>
 
       {/* Detail Modal */}
-      <Modal open={!!detail} onClose={()=>setDetail(null)} title="📋 বিস্তারিত ফলাফল">
-        {detail?.loading && <div className="py-8 text-center text-muted animate-pulse">লোড হচ্ছে…</div>}
-        {detail?.data && (() => {
-          const d = detail.data
-          return (
-            <div className="text-sm">
-              <div className="flex items-center gap-3 mb-4 p-3 bg-card2 rounded-xl border border-border">
-                <div className="text-3xl">👤</div>
-                <div>
-                  <div className="font-display font-bold text-base">{d.playerName}</div>
-                  {d.school && <div className="text-muted text-xs">🏛️ {d.school}</div>}
+      <Modal
+        open={!!detail}
+        onClose={() => setDetail(null)}
+        title="📋 বিস্তারিত ফলাফল"
+      >
+        {detail?.loading && (
+          <div className="py-8 text-center text-muted animate-pulse">
+            লোড হচ্ছে…
+          </div>
+        )}
+        {detail?.data &&
+          (() => {
+            const d = detail.data;
+            return (
+              <div className="text-sm">
+                <div className="flex items-center gap-3 mb-4 p-3 bg-card2 rounded-xl border border-border">
+                  <div className="text-3xl">👤</div>
+                  <div>
+                    <div className="font-display font-bold text-base">
+                      {d.playerName}
+                    </div>
+                    {d.school && (
+                      <div className="text-muted text-xs">🏛️ {d.school}</div>
+                    )}
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  {[
+                    ["📝 Exam", d.examName],
+                    [
+                      "📚 বিষয়",
+                      `${d.subjectId?.emoji || ""} ${d.subjectId?.name || ""}`,
+                    ],
+                    ["🏫 Level", d.levelId?.name || ""],
+                    ["🎯 নম্বর", `${d.score}/${d.fullMarks} (${d.pct}%)`],
+                    ["✅ সঠিক", d.correct],
+                    ["❌ ভুল", d.wrong],
+                    ["⏭️ Skip", d.skip],
+                    ["⏱️ সময়", d.timeStr],
+                  ].map(([l, v]) => (
+                    <div
+                      key={l}
+                      className="bg-card2 border border-border rounded-xl p-2.5"
+                    >
+                      <div className="text-muted text-[.68rem] mb-0.5">{l}</div>
+                      <div className="font-bold text-textprimary text-xs">
+                        {v}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="text-muted text-[.7rem] text-center">
+                  শুরু: {new Date(d.startedAt).toLocaleString("bn-BD")} · শেষ:{" "}
+                  {new Date(d.submittedAt).toLocaleString("bn-BD")}
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-2 mb-3">
-                {[
-                  ['📝 Exam',    d.examName],
-                  ['📚 বিষয়',   `${d.subjectId?.emoji||''} ${d.subjectId?.name||''}`],
-                  ['🏫 Level',   d.levelId?.name||''],
-                  ['🎯 নম্বর',   `${d.score}/${d.fullMarks} (${d.pct}%)`],
-                  ['✅ সঠিক',    d.correct],
-                  ['❌ ভুল',     d.wrong],
-                  ['⏭️ Skip',    d.skip],
-                  ['⏱️ সময়',    d.timeStr],
-                ].map(([l,v])=>(
-                  <div key={l} className="bg-card2 border border-border rounded-xl p-2.5">
-                    <div className="text-muted text-[.68rem] mb-0.5">{l}</div>
-                    <div className="font-bold text-textprimary text-xs">{v}</div>
-                  </div>
-                ))}
-              </div>
-              <div className="text-muted text-[.7rem] text-center">
-                শুরু: {new Date(d.startedAt).toLocaleString('bn-BD')} · 
-                শেষ: {new Date(d.submittedAt).toLocaleString('bn-BD')}
-              </div>
-            </div>
-          )
-        })()}
+            );
+          })()}
       </Modal>
     </div>
-  )
+  );
 }
 
 // ── Subjects Tab ──────────────────────────────────────────────────────────────
 function SubjectsTab() {
-  const { subjects, refreshSubjects, showToast } = useQuiz()
-  const [open,setOpen]=useState(false)
-  const [editId,setEditId]=useState(null)
-  const [form,setForm]=useState({name:'',emoji:'🧮',color:'#f7c948'})
-  const [err,setErr]=useState('')
+  const { subjects, refreshSubjects, showToast } = useQuiz();
+  const [open, setOpen] = useState(false);
+  const [editId, setEditId] = useState(null);
+  const [form, setForm] = useState({ name: "", emoji: "🧮", color: "#f7c948" });
+  const [err, setErr] = useState("");
 
-  const openNew  = ()  => { setEditId(null); setForm({name:'',emoji:'🧮',color:'#f7c948'}); setErr(''); setOpen(true) }
-  const openEdit = (s) => { setEditId(s._id); setForm({name:s.name,emoji:s.emoji,color:s.color}); setErr(''); setOpen(true) }
+  const openNew = () => {
+    setEditId(null);
+    setForm({ name: "", emoji: "🧮", color: "#f7c948" });
+    setErr("");
+    setOpen(true);
+  };
+  const openEdit = (s) => {
+    setEditId(s._id);
+    setForm({ name: s.name, emoji: s.emoji, color: s.color });
+    setErr("");
+    setOpen(true);
+  };
 
   const handleSave = async () => {
-    if (!form.name.trim()) { setErr('⚠️ নাম লিখুন!'); return }
+    if (!form.name.trim()) {
+      setErr("⚠️ নাম লিখুন!");
+      return;
+    }
     try {
-      if (editId) { await subjectsAPI.update(editId, form); showToast('✅ আপডেট!','correct-t') }
-      else        { await subjectsAPI.create(form);          showToast('✅ যোগ হয়েছে!','correct-t') }
-      await refreshSubjects(); setOpen(false)
-    } catch { setErr('❌ সংরক্ষণ হয়নি') }
-  }
+      if (editId) {
+        await subjectsAPI.update(editId, form);
+        showToast("✅ আপডেট!", "correct-t");
+      } else {
+        await subjectsAPI.create(form);
+        showToast("✅ যোগ হয়েছে!", "correct-t");
+      }
+      await refreshSubjects();
+      setOpen(false);
+    } catch {
+      setErr("❌ সংরক্ষণ হয়নি");
+    }
+  };
   const handleDel = async (s) => {
-    if (!confirm(`"${s.name}" ও এর সব প্রশ্ন মুছবো?`)) return
-    await subjectsAPI.remove(s._id); showToast('🗑️ মুছা হয়েছে','wrong-t'); refreshSubjects()
-  }
+    if (!confirm(`"${s.name}" ও এর সব প্রশ্ন মুছবো?`)) return;
+    await subjectsAPI.remove(s._id);
+    showToast("🗑️ মুছা হয়েছে", "wrong-t");
+    refreshSubjects();
+  };
 
   return (
     <div>
       <div className="flex justify-between items-center mb-3">
         <span className="font-display font-bold text-sm">বিষয় তালিকা</span>
-        <Btn variant="green" onClick={openNew}>+ নতুন বিষয়</Btn>
+        <Btn variant="green" onClick={openNew}>
+          + নতুন বিষয়
+        </Btn>
       </div>
-      {subjects.length===0
-        ? <div className="py-8 text-center text-muted text-sm"><div className="text-3xl mb-2">📂</div>কোনো বিষয় নেই।</div>
-        : <div className="flex flex-col gap-2">
-          {subjects.map(s=>(
-            <div key={s._id} className="bg-card border border-border rounded-xl px-3.5 py-3 flex justify-between items-center">
+      {subjects.length === 0 ? (
+        <div className="py-8 text-center text-muted text-sm">
+          <div className="text-3xl mb-2">📂</div>কোনো বিষয় নেই।
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {subjects.map((s) => (
+            <div
+              key={s._id}
+              className="bg-card border border-border rounded-xl px-3.5 py-3 flex justify-between items-center"
+            >
               <div className="flex items-center gap-2.5">
                 <span className="text-2xl">{s.emoji}</span>
-                <div><div className="font-display font-bold text-sm" style={{color:s.color}}>{s.name}</div></div>
+                <div>
+                  <div
+                    className="font-display font-bold text-sm"
+                    style={{ color: s.color }}
+                  >
+                    {s.name}
+                  </div>
+                </div>
               </div>
               <div className="flex gap-1.5">
-                <Btn variant="blue" onClick={()=>openEdit(s)}>✏️</Btn>
-                <Btn variant="danger" onClick={()=>handleDel(s)}>🗑️</Btn>
+                <Btn variant="blue" onClick={() => openEdit(s)}>
+                  ✏️
+                </Btn>
+                <Btn variant="danger" onClick={() => handleDel(s)}>
+                  🗑️
+                </Btn>
               </div>
             </div>
           ))}
         </div>
-      }
-      <Modal open={open} onClose={()=>setOpen(false)} title={editId?'বিষয় সম্পাদনা':'নতুন বিষয়'} size="sm">
-        <Row label="বিষয়ের নাম *"><Inp value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} placeholder="যেমন: গণিত"/></Row>
+      )}
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        title={editId ? "বিষয় সম্পাদনা" : "নতুন বিষয়"}
+        size="sm"
+      >
+        <Row label="বিষয়ের নাম *">
+          <Inp
+            value={form.name}
+            onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+            placeholder="যেমন: গণিত"
+          />
+        </Row>
         <Row label="Emoji">
           <div className="flex flex-wrap gap-1.5">
-            {EMOJIS.map(e=><button key={e} onClick={()=>setForm(f=>({...f,emoji:e}))} className={`text-2xl px-2 py-1 rounded-lg border-2 transition ${form.emoji===e?'border-accent bg-accent/10':'border-transparent hover:border-accent/50'}`}>{e}</button>)}
+            {EMOJIS.map((e) => (
+              <button
+                key={e}
+                onClick={() => setForm((f) => ({ ...f, emoji: e }))}
+                className={`text-2xl px-2 py-1 rounded-lg border-2 transition ${form.emoji === e ? "border-accent bg-accent/10" : "border-transparent hover:border-accent/50"}`}
+              >
+                {e}
+              </button>
+            ))}
           </div>
         </Row>
         <Row label="রঙ">
-          <Sel value={form.color} onChange={e=>setForm(f=>({...f,color:e.target.value}))}>
-            {[['#f7c948','🟡 হলুদ'],['#38b2f5','🔵 নীল'],['#43e97b','🟢 সবুজ'],['#ff6b6b','🔴 লাল'],['#a78bfa','🟣 বেগুনি'],['#fb923c','🟠 কমলা'],['#ec4899','🩷 গোলাপি']].map(([v,l])=><option key={v} value={v}>{l}</option>)}
+          <Sel
+            value={form.color}
+            onChange={(e) => setForm((f) => ({ ...f, color: e.target.value }))}
+          >
+            {[
+              ["#f7c948", "🟡 হলুদ"],
+              ["#38b2f5", "🔵 নীল"],
+              ["#43e97b", "🟢 সবুজ"],
+              ["#ff6b6b", "🔴 লাল"],
+              ["#a78bfa", "🟣 বেগুনি"],
+              ["#fb923c", "🟠 কমলা"],
+              ["#ec4899", "🩷 গোলাপি"],
+            ].map(([v, l]) => (
+              <option key={v} value={v}>
+                {l}
+              </option>
+            ))}
           </Sel>
         </Row>
-        {err&&<p className="text-accent2 text-xs mb-2 text-center">{err}</p>}
+        {err && <p className="text-accent2 text-xs mb-2 text-center">{err}</p>}
         <div className="flex gap-2 mt-4">
-          <button onClick={handleSave} className="flex-1 py-2.5 rounded-xl font-display font-bold text-sm text-[#1a1200]" style={{background:'linear-gradient(135deg,var(--accent),#ff9f43)'}}>💾 সংরক্ষণ</button>
-          <button onClick={()=>setOpen(false)} className="flex-1 py-2.5 rounded-xl font-display font-semibold text-sm text-muted border border-border">বাতিল</button>
+          <button
+            onClick={handleSave}
+            className="flex-1 py-2.5 rounded-xl font-display font-bold text-sm text-[#1a1200]"
+            style={{
+              background: "linear-gradient(135deg,var(--accent),#ff9f43)",
+            }}
+          >
+            💾 সংরক্ষণ
+          </button>
+          <button
+            onClick={() => setOpen(false)}
+            className="flex-1 py-2.5 rounded-xl font-display font-semibold text-sm text-muted border border-border"
+          >
+            বাতিল
+          </button>
         </div>
       </Modal>
     </div>
-  )
+  );
 }
 
 // ── Levels Tab ────────────────────────────────────────────────────────────────
 function LevelsTab() {
-  const { levels, refreshLevels, showToast } = useQuiz()
-  const [open,setOpen]=useState(false)
-  const [editId,setEditId]=useState(null)
-  const [form,setForm]=useState({name:'',short:''})
-  const [err,setErr]=useState('')
+  const { levels, refreshLevels, showToast } = useQuiz();
+  const [open, setOpen] = useState(false);
+  const [editId, setEditId] = useState(null);
+  const [form, setForm] = useState({ name: "", short: "" });
+  const [err, setErr] = useState("");
 
-  const openNew  = ()  => { setEditId(null); setForm({name:'',short:''}); setErr(''); setOpen(true) }
-  const openEdit = (l) => { setEditId(l._id); setForm({name:l.name,short:l.short||''}); setErr(''); setOpen(true) }
+  const openNew = () => {
+    setEditId(null);
+    setForm({ name: "", short: "" });
+    setErr("");
+    setOpen(true);
+  };
+  const openEdit = (l) => {
+    setEditId(l._id);
+    setForm({ name: l.name, short: l.short || "" });
+    setErr("");
+    setOpen(true);
+  };
 
   const handleSave = async () => {
-    if (!form.name.trim()) { setErr('⚠️ নাম লিখুন!'); return }
+    if (!form.name.trim()) {
+      setErr("⚠️ নাম লিখুন!");
+      return;
+    }
     try {
-      if (editId) { await levelsAPI.update(editId, form); showToast('✅ আপডেট!','correct-t') }
-      else        { await levelsAPI.create(form);          showToast('✅ যোগ হয়েছে!','correct-t') }
-      await refreshLevels(); setOpen(false)
-    } catch { setErr('❌ সংরক্ষণ হয়নি') }
-  }
+      if (editId) {
+        await levelsAPI.update(editId, form);
+        showToast("✅ আপডেট!", "correct-t");
+      } else {
+        await levelsAPI.create(form);
+        showToast("✅ যোগ হয়েছে!", "correct-t");
+      }
+      await refreshLevels();
+      setOpen(false);
+    } catch {
+      setErr("❌ সংরক্ষণ হয়নি");
+    }
+  };
   const handleDel = async (l) => {
-    if (!confirm(`"${l.name}" ও এর সব প্রশ্ন মুছবো?`)) return
-    await levelsAPI.remove(l._id); showToast('🗑️ মুছা হয়েছে','wrong-t'); refreshLevels()
-  }
+    if (!confirm(`"${l.name}" ও এর সব প্রশ্ন মুছবো?`)) return;
+    await levelsAPI.remove(l._id);
+    showToast("🗑️ মুছা হয়েছে", "wrong-t");
+    refreshLevels();
+  };
 
   return (
     <div>
       <div className="flex justify-between items-center mb-3">
         <span className="font-display font-bold text-sm">Level তালিকা</span>
-        <Btn variant="green" onClick={openNew}>+ নতুন Level</Btn>
+        <Btn variant="green" onClick={openNew}>
+          + নতুন Level
+        </Btn>
       </div>
-      {levels.length===0
-        ? <div className="py-8 text-center text-muted text-sm"><div className="text-3xl mb-2">🏫</div>কোনো Level নেই।</div>
-        : <div className="flex flex-col gap-2">
-          {levels.map(l=>(
-            <div key={l._id} className="bg-card border border-border rounded-xl px-3.5 py-3 flex justify-between items-center">
+      {levels.length === 0 ? (
+        <div className="py-8 text-center text-muted text-sm">
+          <div className="text-3xl mb-2">🏫</div>কোনো Level নেই।
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {levels.map((l) => (
+            <div
+              key={l._id}
+              className="bg-card border border-border rounded-xl px-3.5 py-3 flex justify-between items-center"
+            >
               <div className="flex items-center gap-2.5">
-                <span className="font-display font-bold text-sm px-3 py-1 rounded-full bg-purple/12 text-purple border border-purple/30">{l.short||l.name}</span>
-                <div><div className="font-semibold text-sm">{l.name}</div></div>
+                <span className="font-display font-bold text-sm px-3 py-1 rounded-full bg-purple/12 text-purple border border-purple/30">
+                  {l.short || l.name}
+                </span>
+                <div>
+                  <div className="font-semibold text-sm">{l.name}</div>
+                </div>
               </div>
               <div className="flex gap-1.5">
-                <Btn variant="blue" onClick={()=>openEdit(l)}>✏️</Btn>
-                <Btn variant="danger" onClick={()=>handleDel(l)}>🗑️</Btn>
+                <Btn variant="blue" onClick={() => openEdit(l)}>
+                  ✏️
+                </Btn>
+                <Btn variant="danger" onClick={() => handleDel(l)}>
+                  🗑️
+                </Btn>
               </div>
             </div>
           ))}
         </div>
-      }
-      <Modal open={open} onClose={()=>setOpen(false)} title={editId?'Level সম্পাদনা':'নতুন Level'} size="sm">
-        <Row label="Level নাম *"><Inp value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} placeholder="যেমন: Class 9-10"/></Row>
-        <Row label="সংক্ষিপ্ত (badge)"><Inp value={form.short} onChange={e=>setForm(f=>({...f,short:e.target.value}))} placeholder="যেমন: SSC" maxLength={8}/></Row>
-        {err&&<p className="text-accent2 text-xs mb-2">{err}</p>}
+      )}
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        title={editId ? "Level সম্পাদনা" : "নতুন Level"}
+        size="sm"
+      >
+        <Row label="Level নাম *">
+          <Inp
+            value={form.name}
+            onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+            placeholder="যেমন: Class 9-10"
+          />
+        </Row>
+        <Row label="সংক্ষিপ্ত (badge)">
+          <Inp
+            value={form.short}
+            onChange={(e) => setForm((f) => ({ ...f, short: e.target.value }))}
+            placeholder="যেমন: SSC"
+            maxLength={8}
+          />
+        </Row>
+        {err && <p className="text-accent2 text-xs mb-2">{err}</p>}
         <div className="flex gap-2 mt-4">
-          <button onClick={handleSave} className="flex-1 py-2.5 rounded-xl font-display font-bold text-sm text-[#1a1200]" style={{background:'linear-gradient(135deg,var(--accent),#ff9f43)'}}>💾 সংরক্ষণ</button>
-          <button onClick={()=>setOpen(false)} className="flex-1 py-2.5 rounded-xl font-display font-semibold text-sm text-muted border border-border">বাতিল</button>
+          <button
+            onClick={handleSave}
+            className="flex-1 py-2.5 rounded-xl font-display font-bold text-sm text-[#1a1200]"
+            style={{
+              background: "linear-gradient(135deg,var(--accent),#ff9f43)",
+            }}
+          >
+            💾 সংরক্ষণ
+          </button>
+          <button
+            onClick={() => setOpen(false)}
+            className="flex-1 py-2.5 rounded-xl font-display font-semibold text-sm text-muted border border-border"
+          >
+            বাতিল
+          </button>
         </div>
       </Modal>
     </div>
-  )
+  );
 }
 
 // ── Questions Tab ─────────────────────────────────────────────────────────────
@@ -728,7 +1090,7 @@ function LevelsTab() {
 //   // examName:q.examName||'',publishAt:toDatetimeLocalValue(q.publishDate)||''
 
 //   const openNew = () => { setEditId(null); setForm({ subjectId: subjects[0]?._id || '', levelId: levels[0]?._id || '', examName: '', publishDate: '', q: '', opts: ['', '', '', ''], ans: -1, marks: 1, context: '', image: '', explanation: '' }); setTags([]); setImgPrev(''); setErr(''); setOpen(true) }
-  
+
 //   const openEdit = q => { setEditId(q._id); setForm({subjectId:q.subjectId,levelId:q.levelId,examName: q.examName||'', publishDate: q.publishDate ? q.publishDate.slice(0,10) : '',difficulty:q.difficulty||'medium',q:q.q,opts:[...q.opts],ans:q.ans,marks:q.marks||1,context:q.context||'',image:q.image||'',explanation:q.explanation||''}); setTags(q.tags||[]); setImgPrev(q.image||''); setErr(''); setOpen(true) }
 
 //   const handleSave = async () => {
@@ -924,359 +1286,564 @@ function LevelsTab() {
 //   )
 // }
 function QuestionsTab() {
-  const { subjects, levels, showToast } = useQuiz()
+  const { subjects, levels, showToast } = useQuiz();
 
   // ── Phase 1: Exam config (filled once) ──
-  const [config, setConfig] = useState(null)  // null = not yet configured
+  const [config, setConfig] = useState(null); // null = not yet configured
   const [configForm, setConfigForm] = useState({
-    subjectId: '', levelId: '', examName: '', publishDate: '', totalMarks: 10,
-  })
-  const [configErr, setConfigErr] = useState('')
+    subjectId: "",
+    levelId: "",
+    examName: "",
+    publishDate: "",
+    totalMarks: 10,
+  });
+  const [configErr, setConfigErr] = useState("");
 
   // ── Phase 2: Question slots ──
-  const [slots, setSlots] = useState([])  // array of question drafts
-  const [saving, setSaving] = useState(false)
-  const [saveMsg, setSaveMsg] = useState('')
+  const [slots, setSlots] = useState([]); // array of question drafts
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState("");
 
   const handleConfigSubmit = () => {
-    const { subjectId, levelId, examName, publishDate, totalMarks } = configForm
-    if (!subjectId)          return setConfigErr('⚠️ বিষয় নির্বাচন করুন')
-    if (!levelId)            return setConfigErr('⚠️ Level নির্বাচন করুন')
-    if (!examName.trim())    return setConfigErr('⚠️ Exam Name লিখুন')
-    if (!publishDate)        return setConfigErr('⚠️ Publish Date দিন')
-    if (!totalMarks || totalMarks < 1) return setConfigErr('⚠️ Total Marks দিন')
-    setConfigErr('')
-    setConfig({ ...configForm, totalMarks: parseInt(totalMarks) })
+    const { subjectId, levelId, examName, publishDate, totalMarks } =
+      configForm;
+    if (!subjectId) return setConfigErr("⚠️ বিষয় নির্বাচন করুন");
+    if (!levelId) return setConfigErr("⚠️ Level নির্বাচন করুন");
+    if (!examName.trim()) return setConfigErr("⚠️ Exam Name লিখুন");
+    if (!publishDate) return setConfigErr("⚠️ Publish Date দিন");
+    if (!totalMarks || totalMarks < 1)
+      return setConfigErr("⚠️ Total Marks দিন");
+    setConfigErr("");
+    setConfig({ ...configForm, totalMarks: parseInt(totalMarks) });
     // Create empty slots
-    setSlots(Array.from({ length: parseInt(totalMarks) }, () => ({
-      q: '', opts: ['', '', '', ''], ans: -1, marks: 1, image: '', explanation: '', context: '',
-    })))
-    setSaveMsg('')
-  }
+    setSlots(
+      Array.from({ length: parseInt(totalMarks) }, () => ({
+        q: "",
+        opts: ["", "", "", ""],
+        ans: -1,
+        marks: 1,
+        image: "",
+        explanation: "",
+        context: "",
+      })),
+    );
+    setSaveMsg("");
+  };
 
   const updateSlot = (i, field, value) => {
-    setSlots(prev => {
-      const next = [...prev]
-      next[i] = { ...next[i], [field]: value }
-      return next
-    })
-  }
+    setSlots((prev) => {
+      const next = [...prev];
+      next[i] = { ...next[i], [field]: value };
+      return next;
+    });
+  };
   const updateSlotOpt = (i, oi, value) => {
-    setSlots(prev => {
-      const next = [...prev]
-      const opts = [...next[i].opts]; opts[oi] = value
-      next[i] = { ...next[i], opts }
-      return next
-    })
-  }
+    setSlots((prev) => {
+      const next = [...prev];
+      const opts = [...next[i].opts];
+      opts[oi] = value;
+      next[i] = { ...next[i], opts };
+      return next;
+    });
+  };
 
   const handleSaveAll = async () => {
     // Validate all slots
     for (let i = 0; i < slots.length; i++) {
-      const s = slots[i]
-      if (!s.q.trim())                        return showToast(`⚠️ প্রশ্ন ${i+1}: প্রশ্ন লিখুন`, 'wrong-t')
-      if (s.opts.some(o => !o.trim()))         return showToast(`⚠️ প্রশ্ন ${i+1}: সব বিকল্প লিখুন`, 'wrong-t')
-      if (s.ans < 0 || s.ans > 3)             return showToast(`⚠️ প্রশ্ন ${i+1}: সঠিক উত্তর select করুন`, 'wrong-t')
+      const s = slots[i];
+      if (!s.q.trim())
+        return showToast(`⚠️ প্রশ্ন ${i + 1}: প্রশ্ন লিখুন`, "wrong-t");
+      if (s.opts.some((o) => !o.trim()))
+        return showToast(`⚠️ প্রশ্ন ${i + 1}: সব বিকল্প লিখুন`, "wrong-t");
+      if (s.ans < 0 || s.ans > 3)
+        return showToast(
+          `⚠️ প্রশ্ন ${i + 1}: সঠিক উত্তর select করুন`,
+          "wrong-t",
+        );
     }
-    setSaving(true); setSaveMsg('')
+    setSaving(true);
+    setSaveMsg("");
     try {
-      const { subjectId, levelId, examName, publishDate, publishTime } = config
+      const { subjectId, levelId, examName, publishDate, publishTime } = config;
       // const publishDateTime = `${publishDate}T${publishTime || '00:00'}:00`
       // const publishDateTime = new Date(`${publishDate}T${publishTime || '00:00'}:00`).toISOString();
       // const localDate = new Date(`${publishDate}T${publishTime || '00:00'}:00`)
       // const publishDateTime = new Date(localDate.getTime() - localDate.getTimezoneOffset() * 60000).toISOString()
-      const publishDateTime = new Date(publishDate).toISOString()
+      const publishDateTime = new Date(publishDate).toISOString();
       const res = await adminExamsAPI.create({
-        subjectId, levelId, examName,
+        subjectId,
+        levelId,
+        examName,
         publishDate: publishDateTime,
         questions: slots,
-      })
-      setSaveMsg(`✅ "${examName}" — ${res.data.inserted}টি প্রশ্ন সংরক্ষিত!`)
-      showToast(`✅ ${res.data.inserted}টি import হয়েছে!`, 'correct-t')
+      });
+      setSaveMsg(`✅ "${examName}" — ${res.data.inserted}টি প্রশ্ন সংরক্ষিত!`);
+      showToast(`✅ ${res.data.inserted}টি import হয়েছে!`, "correct-t");
       // Reset everything
-      setConfig(null)
-      setSlots([])
-      setConfigForm({ subjectId:'', levelId:'', examName:'', publishDate:'', publishTime:'00:00', totalMarks:10 })
+      setConfig(null);
+      setSlots([]);
+      setConfigForm({
+        subjectId: "",
+        levelId: "",
+        examName: "",
+        publishDate: "",
+        publishTime: "00:00",
+        totalMarks: 10,
+      });
     } catch (err) {
-      setSaveMsg('❌ সংরক্ষণ হয়নি: ' + (err.response?.data?.error || err.message))
+      setSaveMsg(
+        "❌ সংরক্ষণ হয়নি: " + (err.response?.data?.error || err.message),
+      );
     }
-    setSaving(false)
-  }
+    setSaving(false);
+  };
 
   // ── Phase 1 UI ──
   if (!config) {
     return (
       <div>
-        <div className="font-display font-bold text-sm mb-1">📝 নতুন Exam তৈরি করুন</div>
-        <p className="text-muted text-xs mb-4">একবার config করুন, তারপর প্রশ্নগুলো একে একে লিখুন।</p>
+        <div className="font-display font-bold text-sm mb-1">
+          📝 নতুন Exam তৈরি করুন
+        </div>
+        <p className="text-muted text-xs mb-4">
+          একবার config করুন, তারপর প্রশ্নগুলো একে একে লিখুন।
+        </p>
         <div className="bg-card border border-border rounded-2xl p-4">
           <div className="grid grid-cols-2 gap-3">
             <Row label="বিষয় *">
-              <Sel value={configForm.subjectId} onChange={e=>setConfigForm(f=>({...f,subjectId:e.target.value}))}>
+              <Sel
+                value={configForm.subjectId}
+                onChange={(e) =>
+                  setConfigForm((f) => ({ ...f, subjectId: e.target.value }))
+                }
+              >
                 <option value="">— বিষয় —</option>
-                {subjects.map(s=><option key={s._id} value={s._id}>{s.emoji} {s.name}</option>)}
+                {subjects.map((s) => (
+                  <option key={s._id} value={s._id}>
+                    {s.emoji} {s.name}
+                  </option>
+                ))}
               </Sel>
             </Row>
             <Row label="Level *">
-              <Sel value={configForm.levelId} onChange={e=>setConfigForm(f=>({...f,levelId:e.target.value}))}>
+              <Sel
+                value={configForm.levelId}
+                onChange={(e) =>
+                  setConfigForm((f) => ({ ...f, levelId: e.target.value }))
+                }
+              >
                 <option value="">— Level —</option>
-                {levels.map(l=><option key={l._id} value={l._id}>{l.name}</option>)}
+                {levels.map((l) => (
+                  <option key={l._id} value={l._id}>
+                    {l.name}
+                  </option>
+                ))}
               </Sel>
             </Row>
             <Row label="Exam Name *">
-              <Inp value={configForm.examName} onChange={e=>setConfigForm(f=>({...f,examName:e.target.value}))} placeholder="যেমন: গণিত Model Test-1" maxLength={80}/>
+              <Inp
+                value={configForm.examName}
+                onChange={(e) =>
+                  setConfigForm((f) => ({ ...f, examName: e.target.value }))
+                }
+                placeholder="যেমন: গণিত Model Test-1"
+                maxLength={80}
+              />
             </Row>
             <Row label="Total Marks *">
-              <Inp type="number" min={1} max={200} value={configForm.totalMarks} onChange={e=>setConfigForm(f=>({...f,totalMarks:e.target.value}))} placeholder="যেমন: 30"/>
+              <Inp
+                type="number"
+                min={1}
+                max={200}
+                value={configForm.totalMarks}
+                onChange={(e) =>
+                  setConfigForm((f) => ({ ...f, totalMarks: e.target.value }))
+                }
+                placeholder="যেমন: 30"
+              />
             </Row>
             <Row label="Publish Date *">
-              <Inp type="date" value={configForm.publishDate} onChange={e=>setConfigForm(f=>({...f,publishDate:e.target.value}))}/>
+              <Inp
+                type="date"
+                value={configForm.publishDate}
+                onChange={(e) =>
+                  setConfigForm((f) => ({ ...f, publishDate: e.target.value }))
+                }
+              />
             </Row>
             {/* <Row label="Publish Time">
               <Inp type="time" value={configForm.publishTime} onChange={e=>setConfigForm(f=>({...f,publishTime:e.target.value}))}/>
             </Row> */}
           </div>
-          {configErr && <p className="text-accent2 text-xs mt-2 text-center">{configErr}</p>}
-          <button onClick={handleConfigSubmit}
+          {configErr && (
+            <p className="text-accent2 text-xs mt-2 text-center">{configErr}</p>
+          )}
+          <button
+            onClick={handleConfigSubmit}
             className="mt-4 w-full py-3 rounded-xl font-display font-bold text-sm text-[#1a1200] transition hover:-translate-y-0.5"
-            style={{background:'linear-gradient(135deg,var(--accent),#ff9f43)'}}>
-            ➡️ পরবর্তী: প্রশ্ন লিখুন ({configForm.totalMarks || '?'}টি)
+            style={{
+              background: "linear-gradient(135deg,var(--accent),#ff9f43)",
+            }}
+          >
+            ➡️ পরবর্তী: প্রশ্ন লিখুন ({configForm.totalMarks || "?"}টি)
           </button>
         </div>
       </div>
-    )
+    );
   }
 
   // ── Phase 2 UI ──
-  const subj = subjects.find(s => s._id === config.subjectId)
-  const lvl  = levels.find(l => l._id === config.levelId)
+  const subj = subjects.find((s) => s._id === config.subjectId);
+  const lvl = levels.find((l) => l._id === config.levelId);
 
   return (
     <div>
       {/* Config summary banner */}
       <div className="bg-card2 border border-border rounded-xl px-3.5 py-2.5 mb-4 flex flex-wrap gap-2 items-center justify-between">
         <div className="flex flex-wrap gap-2 text-xs">
-          {subj && <span className="px-2 py-1 rounded-lg font-bold" style={{color:subj.color,background:`${subj.color}18`}}>{subj.emoji} {subj.name}</span>}
-          {lvl  && <span className="px-2 py-1 rounded-full text-purple bg-purple/10 border border-purple/30">{lvl.name}</span>}
-          <span className="text-textprimary font-bold">📝 {config.examName}</span>
+          {subj && (
+            <span
+              className="px-2 py-1 rounded-lg font-bold"
+              style={{ color: subj.color, background: `${subj.color}18` }}
+            >
+              {subj.emoji} {subj.name}
+            </span>
+          )}
+          {lvl && (
+            <span className="px-2 py-1 rounded-full text-purple bg-purple/10 border border-purple/30">
+              {lvl.name}
+            </span>
+          )}
+          <span className="text-textprimary font-bold">
+            📝 {config.examName}
+          </span>
           <span className="text-muted">📅 {config.publishDate}</span>
           <span className="text-muted">🎯 {config.totalMarks} marks</span>
         </div>
-        <Btn variant="outline" onClick={()=>{setConfig(null);setSlots([])}}>✏️ Edit Config</Btn>
+        <Btn
+          variant="outline"
+          onClick={() => {
+            setConfig(null);
+            setSlots([]);
+          }}
+        >
+          ✏️ Edit Config
+        </Btn>
       </div>
 
       {/* Progress */}
       <div className="flex items-center justify-between mb-3">
-        <span className="text-xs text-muted">{slots.filter(s=>s.q.trim()&&s.ans>=0).length} / {slots.length} টি সম্পূর্ণ</span>
+        <span className="text-xs text-muted">
+          {slots.filter((s) => s.q.trim() && s.ans >= 0).length} /{" "}
+          {slots.length} টি সম্পূর্ণ
+        </span>
         <Btn variant="green" onClick={handleSaveAll} disabled={saving}>
-          {saving ? '⏳ সংরক্ষণ হচ্ছে…' : `💾 সব ${slots.length}টি প্রশ্ন সংরক্ষণ করুন`}
+          {saving
+            ? "⏳ সংরক্ষণ হচ্ছে…"
+            : `💾 সব ${slots.length}টি প্রশ্ন সংরক্ষণ করুন`}
         </Btn>
       </div>
 
-      {saveMsg && <p className={`text-xs mb-3 text-center font-bold ${saveMsg.startsWith('✅')?'text-green':'text-accent2'}`}>{saveMsg}</p>}
+      {saveMsg && (
+        <p
+          className={`text-xs mb-3 text-center font-bold ${saveMsg.startsWith("✅") ? "text-green" : "text-accent2"}`}
+        >
+          {saveMsg}
+        </p>
+      )}
 
       {/* Question slots */}
       <div className="flex flex-col gap-4">
         {slots.map((slot, i) => {
-          const done = slot.q.trim() && slot.ans >= 0 && slot.opts.every(o=>o.trim())
+          const done =
+            slot.q.trim() && slot.ans >= 0 && slot.opts.every((o) => o.trim());
           return (
-            <div key={i} className={`bg-card border rounded-xl p-4 transition ${done?'border-green/40':'border-border'}`}>
+            <div
+              key={i}
+              className={`bg-card border rounded-xl p-4 transition ${done ? "border-green/40" : "border-border"}`}
+            >
               <div className="flex justify-between items-center mb-2">
-                <span className={`font-display font-bold text-xs px-2 py-0.5 rounded-full ${done?'bg-green/10 text-green':'bg-card2 text-muted'}`}>
-                  প্রশ্ন {i+1} {done?'✅':''}
+                <span
+                  className={`font-display font-bold text-xs px-2 py-0.5 rounded-full ${done ? "bg-green/10 text-green" : "bg-card2 text-muted"}`}
+                >
+                  প্রশ্ন {i + 1} {done ? "✅" : ""}
                 </span>
               </div>
               <textarea
                 className="w-full bg-card2 border-[1.5px] border-border rounded-xl px-3.5 py-2.5 text-textprimary font-body text-sm outline-none focus:border-accent resize-y min-h-[72px] mb-3"
-                placeholder={`প্রশ্ন ${i+1} লিখুন…`}
+                placeholder={`প্রশ্ন ${i + 1} লিখুন…`}
                 value={slot.q}
-                onChange={e=>updateSlot(i,'q',e.target.value)}
+                onChange={(e) => updateSlot(i, "q", e.target.value)}
               />
-              <div className="text-muted text-xs mb-2">সঠিক বিকল্পের পাশের বৃত্ত ✅</div>
-              {[0,1,2,3].map(oi=>(
+              <div className="text-muted text-xs mb-2">
+                সঠিক বিকল্পের পাশের বৃত্ত ✅
+              </div>
+              {[0, 1, 2, 3].map((oi) => (
                 <div key={oi} className="flex items-center gap-2 mb-2">
-                  <span className="w-6 h-6 rounded-full bg-border flex items-center justify-center font-bold text-xs flex-shrink-0 text-muted">{LETTERS[oi]}</span>
+                  <span className="w-6 h-6 rounded-full bg-border flex items-center justify-center font-bold text-xs flex-shrink-0 text-muted">
+                    {LETTERS[oi]}
+                  </span>
                   <input
                     className="flex-1 bg-card2 border-[1.5px] border-border rounded-xl px-3 py-2 text-textprimary font-body text-sm outline-none focus:border-accent"
                     placeholder={`বিকল্প ${LETTERS[oi]}`}
                     value={slot.opts[oi]}
-                    onChange={e=>updateSlotOpt(i,oi,e.target.value)}
+                    onChange={(e) => updateSlotOpt(i, oi, e.target.value)}
                   />
-                  <input type="radio" name={`ans_${i}`} className="w-5 h-5 accent-green cursor-pointer" checked={slot.ans===oi} onChange={()=>updateSlot(i,'ans',oi)}/>
+                  <input
+                    type="radio"
+                    name={`ans_${i}`}
+                    className="w-5 h-5 accent-green cursor-pointer"
+                    checked={slot.ans === oi}
+                    onChange={() => updateSlot(i, "ans", oi)}
+                  />
                 </div>
               ))}
               {/* Optional fields toggle */}
               <details className="mt-1">
-                <summary className="text-muted text-xs cursor-pointer select-none hover:text-accent">+ Explanation / Image (ঐচ্ছিক)</summary>
+                <summary className="text-muted text-xs cursor-pointer select-none hover:text-accent">
+                  + Explanation / Image (ঐচ্ছিক)
+                </summary>
                 <div className="mt-2 space-y-2">
-                  <Inp placeholder="💡 Explanation…" value={slot.explanation} onChange={e=>updateSlot(i,'explanation',e.target.value)}/>
-                  <Inp placeholder="🖼️ Image URL…" value={slot.image} onChange={e=>updateSlot(i,'image',e.target.value)}/>
+                  <Inp
+                    placeholder="💡 Explanation…"
+                    value={slot.explanation}
+                    onChange={(e) =>
+                      updateSlot(i, "explanation", e.target.value)
+                    }
+                  />
+                  <Inp
+                    placeholder="🖼️ Image URL…"
+                    value={slot.image}
+                    onChange={(e) => updateSlot(i, "image", e.target.value)}
+                  />
                 </div>
               </details>
             </div>
-          )
+          );
         })}
       </div>
 
       {slots.length > 3 && (
-        <button onClick={handleSaveAll} disabled={saving}
+        <button
+          onClick={handleSaveAll}
+          disabled={saving}
           className="mt-4 w-full py-3 rounded-xl font-display font-bold text-sm text-[#1a1200] transition hover:-translate-y-0.5 disabled:opacity-50"
-          style={{background:'linear-gradient(135deg,var(--accent),#ff9f43)'}}>
-          {saving ? '⏳…' : `💾 সব ${slots.length}টি প্রশ্ন সংরক্ষণ করুন`}
+          style={{
+            background: "linear-gradient(135deg,var(--accent),#ff9f43)",
+          }}
+        >
+          {saving ? "⏳…" : `💾 সব ${slots.length}টি প্রশ্ন সংরক্ষণ করুন`}
         </button>
       )}
     </div>
-  )
+  );
 }
 
 // ── PDF Upload Tab — THE KEY NEW FEATURE ─────────────────────────────────────
 function PdfTab() {
-  const { subjects, levels, showToast } = useQuiz()
-  const [file,       setFile]       = useState(null)
-  const [subjId,     setSubjId]     = useState('')
-  const [lvlId,      setLvlId]      = useState('')
-  const [examName,   setExamName]   = useState('')
-  const [publishDate,  setPublishDate]  = useState('')
-  const [pdfRef,     setPdfRef]     = useState('')
-  const [parsing,    setParsing]    = useState(false)
-  const [parsed,     setParsed]     = useState(null)   // extracted questions
-  const [saving,     setSaving]     = useState(false)
-  const [editIdx,    setEditIdx]    = useState(null)   // index being edited
-  const [editForm,   setEditForm]   = useState({})
-  const [parseErr,   setParseErr]   = useState('')
-  const [saveMsg,    setSaveMsg]    = useState('')
-  const dropRef = useRef()
+  const { subjects, levels, showToast } = useQuiz();
+  const [file, setFile] = useState(null);
+  const [subjId, setSubjId] = useState("");
+  const [lvlId, setLvlId] = useState("");
+  const [examName, setExamName] = useState("");
+  const [publishDate, setPublishDate] = useState("");
+  const [pdfRef, setPdfRef] = useState("");
+  const [parsing, setParsing] = useState(false);
+  const [parsed, setParsed] = useState(null); // extracted questions
+  const [saving, setSaving] = useState(false);
+  const [editIdx, setEditIdx] = useState(null); // index being edited
+  const [editForm, setEditForm] = useState({});
+  const [parseErr, setParseErr] = useState("");
+  const [saveMsg, setSaveMsg] = useState("");
+  const dropRef = useRef();
 
   // Trigger parse
   const handleParse = async () => {
-    if (!file)     { setParseErr('PDF ফাইল select করুন'); return }
-    if (!subjId)   { setParseErr('বিষয় select করুন'); return }
-    if (!lvlId)    { setParseErr('Level select করুন'); return }
-    if (!examName.trim()) { setParseErr('Exam Name লিখুন'); return }
-    if (!publishDate?.trim()) { setParseErr('প্রকাশের তারিখ নির্বাচন করুন'); return }
-    // if (Number.isNaN(new Date(publishDate).getTime())) { setParseErr('প্রকাশের সময় সঠিক নয়'); return }
-    setParsing(true); setParseErr(''); setParsed(null); setSaveMsg('')
-    try {
-      const res = await pdfAPI.parse(file)
-      setParsed((res.data.questions || []).map(q => ({ ...q, image: q.image || '' })))
-      if (!pdfRef.trim() && file?.name) setPdfRef(`pdf:${file.name}`)
-      showToast(`✅ ${res.data.count}টি প্রশ্ন extract হয়েছে!`, 'correct-t')
-    } catch (err) {
-      setParseErr(err.response?.data?.error || '❌ Parse করা যায়নি। পুনরায় চেষ্টা করুন।')
+    if (!file) {
+      setParseErr("PDF ফাইল select করুন");
+      return;
     }
-    setParsing(false)
-  }
+    if (!subjId) {
+      setParseErr("বিষয় select করুন");
+      return;
+    }
+    if (!lvlId) {
+      setParseErr("Level select করুন");
+      return;
+    }
+    if (!examName.trim()) {
+      setParseErr("Exam Name লিখুন");
+      return;
+    }
+    if (!publishDate?.trim()) {
+      setParseErr("প্রকাশের তারিখ নির্বাচন করুন");
+      return;
+    }
+    // if (Number.isNaN(new Date(publishDate).getTime())) { setParseErr('প্রকাশের সময় সঠিক নয়'); return }
+    setParsing(true);
+    setParseErr("");
+    setParsed(null);
+    setSaveMsg("");
+    try {
+      const res = await pdfAPI.parse(file);
+      setParsed(
+        (res.data.questions || []).map((q) => ({ ...q, image: q.image || "" })),
+      );
+      if (!pdfRef.trim() && file?.name) setPdfRef(`pdf:${file.name}`);
+      showToast(`✅ ${res.data.count}টি প্রশ্ন extract হয়েছে!`, "correct-t");
+    } catch (err) {
+      setParseErr(
+        err.response?.data?.error ||
+          "❌ Parse করা যায়নি। পুনরায় চেষ্টা করুন।",
+      );
+    }
+    setParsing(false);
+  };
 
   // Inline edit one extracted question
-  const startEdit = (i) => { setEditIdx(i); setEditForm({ ...parsed[i], image: parsed[i].image || '' }) }
-  const saveEdit  = ()  => {
-    const updated = [...parsed]; updated[editIdx] = editForm
-    setParsed(updated); setEditIdx(null)
-  }
-  const removeQ   = (i) => setParsed(parsed.filter((_,j)=>j!==i))
+  const startEdit = (i) => {
+    setEditIdx(i);
+    setEditForm({ ...parsed[i], image: parsed[i].image || "" });
+  };
+  const saveEdit = () => {
+    const updated = [...parsed];
+    updated[editIdx] = editForm;
+    setParsed(updated);
+    setEditIdx(null);
+  };
+  const removeQ = (i) => setParsed(parsed.filter((_, j) => j !== i));
 
   const attachQImage = (idx, imageFile) => {
-    if (!imageFile) return
-    if (imageFile.size > 2 * 1024 * 1024) { showToast('⚠️ ছবি সর্বোচ্চ ২MB', 'wrong-t'); return }
-    const r = new FileReader()
-    r.onload = e => {
-      const u = [...parsed]
-      u[idx] = { ...u[idx], image: e.target.result }
-      setParsed(u)
+    if (!imageFile) return;
+    if (imageFile.size > 2 * 1024 * 1024) {
+      showToast("⚠️ ছবি সর্বোচ্চ ২MB", "wrong-t");
+      return;
     }
-    r.readAsDataURL(imageFile)
-  }
+    const r = new FileReader();
+    r.onload = (e) => {
+      const u = [...parsed];
+      u[idx] = { ...u[idx], image: e.target.result };
+      setParsed(u);
+    };
+    r.readAsDataURL(imageFile);
+  };
 
   // Save all to MongoDB
   const handleSaveAll = async () => {
-    if (!parsed?.length) return
-    setSaving(true); setSaveMsg('')
+    if (!parsed?.length) return;
+    setSaving(true);
+    setSaveMsg("");
     try {
       // const pub = new Date(publishDate)
       // const pub = new Date(publishDate.length === 16 ? publishDate + ':00' : publishDate)
       // const pub = new Date(publishDate.includes('Z') ? publishDate : publishDate + '+06:00')
       // if (Number.isNaN(pub.getTime()))
-//       const pub = new Date(publishDate)   // datetime-local is already local time
+      //       const pub = new Date(publishDate)   // datetime-local is already local time
       // const pubUTC = new Date(pub.getTime() - pub.getTimezoneOffset() * 60000)
-     
+
       // publishDate: new Date(publishDate).toISOString()
-if (Number.isNaN(pubUTC.getTime()))
-      {
-        setSaveMsg('❌ প্রকাশের সময় সঠিক নয়')
-        setSaving(false)
-        return
+      if (Number.isNaN(pubUTC.getTime())) {
+        setSaveMsg("❌ প্রকাশের সময় সঠিক নয়");
+        setSaving(false);
+        return;
       }
       const res = await adminExamsAPI.create({
         subjectId: subjId,
         levelId: lvlId,
         examName,
         publishDate: new Date(publishDate).toISOString(),
-        pdfRef: pdfRef.trim() || (file ? `pdf:${file.name}` : ''),
+        pdfRef: pdfRef.trim() || (file ? `pdf:${file.name}` : ""),
         questions: parsed,
-      })
-      setSaveMsg(`✅ "${examName}" exam-এর জন্য ${res.data.inserted}টি প্রশ্ন সংরক্ষিত হয়েছে!`)
-      showToast(`✅ ${res.data.inserted}টি import হয়েছে!`, 'correct-t')
-      setParsed(null); setFile(null); setPdfRef('')
+      });
+      setSaveMsg(
+        `✅ "${examName}" exam-এর জন্য ${res.data.inserted}টি প্রশ্ন সংরক্ষিত হয়েছে!`,
+      );
+      showToast(`✅ ${res.data.inserted}টি import হয়েছে!`, "correct-t");
+      setParsed(null);
+      setFile(null);
+      setPdfRef("");
     } catch (err) {
-      setSaveMsg('❌ সংরক্ষণ হয়নি: ' + (err.response?.data?.error || err.message))
+      setSaveMsg(
+        "❌ সংরক্ষণ হয়নি: " + (err.response?.data?.error || err.message),
+      );
     }
-    setSaving(false)
-  }
+    setSaving(false);
+  };
 
-  const handleDrop = e => {
-    e.preventDefault(); dropRef.current?.classList.remove('dragover')
-    const f = e.dataTransfer.files[0]
-    if (f?.type === 'application/pdf') setFile(f)
-    else showToast('⚠️ শুধু PDF ফাইল গ্রহণযোগ্য', 'wrong-t')
-  }
+  const handleDrop = (e) => {
+    e.preventDefault();
+    dropRef.current?.classList.remove("dragover");
+    const f = e.dataTransfer.files[0];
+    if (f?.type === "application/pdf") setFile(f);
+    else showToast("⚠️ শুধু PDF ফাইল গ্রহণযোগ্য", "wrong-t");
+  };
 
   return (
     <div>
-      <div className="font-display font-bold text-sm mb-1">📄 PDF → Quiz (AI-Powered)</div>
-      <p className="text-muted text-xs mb-4">PDF আপলোড করুন → AI স্বয়ংক্রিয়ভাবে MCQ প্রশ্ন extract করবে → Review করুন → MongoDB-তে সংরক্ষণ করুন</p>
+      <div className="font-display font-bold text-sm mb-1">
+        📄 PDF → Quiz (AI-Powered)
+      </div>
+      <p className="text-muted text-xs mb-4">
+        PDF আপলোড করুন → AI স্বয়ংক্রিয়ভাবে MCQ প্রশ্ন extract করবে → Review
+        করুন → MongoDB-তে সংরক্ষণ করুন
+      </p>
 
       {/* Step 1: Config */}
       <div className="bg-card border border-border rounded-2xl p-4 mb-4">
-        <div className="font-display font-bold text-blue text-xs mb-3">ধাপ ১: বিষয় ও Level নির্বাচন করুন</div>
+        <div className="font-display font-bold text-blue text-xs mb-3">
+          ধাপ ১: বিষয় ও Level নির্বাচন করুন
+        </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-muted text-xs mb-1">বিষয় *</label>
-            <Sel value={subjId} onChange={e=>setSubjId(e.target.value)}>
+            <Sel value={subjId} onChange={(e) => setSubjId(e.target.value)}>
               <option value="">— বিষয় —</option>
-              {subjects.map(s=><option key={s._id} value={s._id}>{s.emoji} {s.name}</option>)}
+              {subjects.map((s) => (
+                <option key={s._id} value={s._id}>
+                  {s.emoji} {s.name}
+                </option>
+              ))}
             </Sel>
           </div>
           <div>
             <label className="block text-muted text-xs mb-1">Level *</label>
-            <Sel value={lvlId} onChange={e=>setLvlId(e.target.value)}>
+            <Sel value={lvlId} onChange={(e) => setLvlId(e.target.value)}>
               <option value="">— Level —</option>
-              {levels.map(l=><option key={l._id} value={l._id}>{l.name}</option>)}
+              {levels.map((l) => (
+                <option key={l._id} value={l._id}>
+                  {l.name}
+                </option>
+              ))}
             </Sel>
           </div>
           <div className="col-span-2 sm:col-span-1">
             <label className="block text-muted text-xs mb-1">Exam Name *</label>
             <input
               value={examName}
-              onChange={e => setExamName(e.target.value)}
+              onChange={(e) => setExamName(e.target.value)}
               placeholder="যেমন: গণিত SSC Model Test-1"
               className="w-full bg-card2 border-[1.5px] border-border rounded-xl px-3.5 py-2.5 text-textprimary font-body text-sm outline-none transition focus:border-accent placeholder-muted"
               maxLength={80}
             />
           </div>
           <div className="col-span-2 sm:col-span-1">
-            <label className="block text-muted text-xs mb-1">প্রকাশের তারিখ</label>
+            <label className="block text-muted text-xs mb-1">
+              প্রকাশের তারিখ
+            </label>
             <input
               type="date"
               value={publishDate}
-              onChange={e => setPublishDate(e.target.value)}
+              onChange={(e) => setPublishDate(e.target.value)}
               className="w-full bg-card2 border-[1.5px] border-border rounded-xl px-3.5 py-2.5 text-textprimary font-body text-sm outline-none transition focus:border-accent placeholder-muted"
             />
           </div>
           <div className="col-span-2">
-            <label className="block text-muted text-xs mb-1">PDF রেফারেন্স (ঐচ্ছিক — স্টোরেজ কী / নোট)</label>
+            <label className="block text-muted text-xs mb-1">
+              PDF রেফারেন্স (ঐচ্ছিক — স্টোরেজ কী / নোট)
+            </label>
             <input
               value={pdfRef}
-              onChange={e => setPdfRef(e.target.value)}
+              onChange={(e) => setPdfRef(e.target.value)}
               placeholder="যেমন: pdf:model-test-1.pdf"
               className="w-full bg-card2 border-[1.5px] border-border rounded-xl px-3.5 py-2.5 text-textprimary font-body text-sm outline-none transition focus:border-accent placeholder-muted"
             />
@@ -1286,68 +1853,159 @@ if (Number.isNaN(pubUTC.getTime()))
 
       {/* Step 2: Drop zone */}
       <div className="bg-card border border-border rounded-2xl p-4 mb-4">
-        <div className="font-display font-bold text-blue text-xs mb-3">ধাপ ২: PDF আপলোড করুন</div>
+        <div className="font-display font-bold text-blue text-xs mb-3">
+          ধাপ ২: PDF আপলোড করুন
+        </div>
         <div
           ref={dropRef}
           className="border-2 border-dashed border-border rounded-xl p-6 text-center cursor-pointer transition-all hover:border-accent hover:bg-accent/4"
-          style={file ? { borderColor:'var(--green)', background:'rgba(67,233,123,.06)' } : {}}
-          onClick={() => document.getElementById('pdfFileInp').click()}
-          onDragOver={e=>{e.preventDefault();dropRef.current?.classList.add('dragover')}}
-          onDragLeave={()=>dropRef.current?.classList.remove('dragover')}
+          style={
+            file
+              ? {
+                  borderColor: "var(--green)",
+                  background: "rgba(67,233,123,.06)",
+                }
+              : {}
+          }
+          onClick={() => document.getElementById("pdfFileInp").click()}
+          onDragOver={(e) => {
+            e.preventDefault();
+            dropRef.current?.classList.add("dragover");
+          }}
+          onDragLeave={() => dropRef.current?.classList.remove("dragover")}
           onDrop={handleDrop}
         >
-          <input id="pdfFileInp" type="file" accept=".pdf" className="hidden" onChange={e=>{if(e.target.files[0])setFile(e.target.files[0])}}/>
+          <input
+            id="pdfFileInp"
+            type="file"
+            accept=".pdf"
+            className="hidden"
+            onChange={(e) => {
+              if (e.target.files[0]) setFile(e.target.files[0]);
+            }}
+          />
           {file ? (
             <div className="flex items-center justify-center gap-3">
               <span className="text-3xl">📄</span>
               <div className="text-left">
-                <div className="font-display font-bold text-green text-sm">{file.name}</div>
-                <div className="text-muted text-xs">{(file.size/1024/1024).toFixed(2)} MB · PDF</div>
+                <div className="font-display font-bold text-green text-sm">
+                  {file.name}
+                </div>
+                <div className="text-muted text-xs">
+                  {(file.size / 1024 / 1024).toFixed(2)} MB · PDF
+                </div>
               </div>
-              <button onClick={e=>{e.stopPropagation();setFile(null);setParsed(null)}} className="ml-2 text-accent2 text-lg hover:scale-110 transition">✕</button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setFile(null);
+                  setParsed(null);
+                }}
+                className="ml-2 text-accent2 text-lg hover:scale-110 transition"
+              >
+                ✕
+              </button>
             </div>
           ) : (
             <>
               <div className="text-4xl mb-2">📥</div>
-              <div className="text-textprimary font-display font-bold text-sm mb-1">PDF drag করুন বা click করে select করুন</div>
-              <div className="text-muted text-xs">সর্বোচ্চ ১০ MB · text-based PDF সবচেয়ে ভালো কাজ করে</div>
+              <div className="text-textprimary font-display font-bold text-sm mb-1">
+                PDF drag করুন বা click করে select করুন
+              </div>
+              <div className="text-muted text-xs">
+                সর্বোচ্চ ১০ MB · text-based PDF সবচেয়ে ভালো কাজ করে
+              </div>
             </>
           )}
         </div>
 
-        <button onClick={handleParse} disabled={parsing||!file||!subjId||!lvlId||!examName.trim()||!publishDate}
+        <button
+          onClick={handleParse}
+          disabled={
+            parsing ||
+            !file ||
+            !subjId ||
+            !lvlId ||
+            !examName.trim() ||
+            !publishDate
+          }
           className="mt-3 w-full py-3 rounded-xl font-display font-bold text-sm text-white transition hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{ background:'linear-gradient(135deg,#38b2f5,var(--purple))' }}>
+          style={{
+            background: "linear-gradient(135deg,#38b2f5,var(--purple))",
+          }}
+        >
           {parsing ? (
             <span className="flex items-center justify-center gap-2">
-              <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>
+              <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               AI প্রশ্ন extract করছে… (৩০-৬০ সেকেন্ড)
             </span>
-          ) : '🤖 AI দিয়ে প্রশ্ন Extract করুন'}
+          ) : (
+            "🤖 AI দিয়ে প্রশ্ন Extract করুন"
+          )}
         </button>
-        {parseErr && <p className="text-accent2 text-xs mt-2 text-center">{parseErr}</p>}
+        {parseErr && (
+          <p className="text-accent2 text-xs mt-2 text-center">{parseErr}</p>
+        )}
       </div>
 
       {/* Step 3: Review extracted questions */}
       {parsed && (
         <div className="bg-card border border-border rounded-2xl p-4 mb-4">
           <div className="flex justify-between items-center mb-3">
-            <div className="font-display font-bold text-blue text-xs">ধাপ ৩: Review ও Edit করুন ({parsed.length}টি প্রশ্ন)</div>
-            <Btn variant="danger" onClick={()=>{setParsed(null);setSaveMsg('')}}>বাতিল</Btn>
+            <div className="font-display font-bold text-blue text-xs">
+              ধাপ ৩: Review ও Edit করুন ({parsed.length}টি প্রশ্ন)
+            </div>
+            <Btn
+              variant="danger"
+              onClick={() => {
+                setParsed(null);
+                setSaveMsg("");
+              }}
+            >
+              বাতিল
+            </Btn>
           </div>
 
           <div className="flex flex-col gap-3 max-h-[420px] overflow-y-auto">
             {parsed.map((q, i) => (
-              <div key={i} className="bg-card2 border border-border rounded-xl p-3">
+              <div
+                key={i}
+                className="bg-card2 border border-border rounded-xl p-3"
+              >
                 {editIdx === i ? (
                   /* Inline edit mode */
                   <div>
-                    <textarea className="w-full bg-bg border border-border rounded-lg px-3 py-2 text-textprimary text-xs font-body outline-none focus:border-accent resize-y mb-2" rows={3} value={editForm.q} onChange={e=>setEditForm(f=>({...f,q:e.target.value}))}/>
-                    {[0,1,2,3].map(oi=>(
+                    <textarea
+                      className="w-full bg-bg border border-border rounded-lg px-3 py-2 text-textprimary text-xs font-body outline-none focus:border-accent resize-y mb-2"
+                      rows={3}
+                      value={editForm.q}
+                      onChange={(e) =>
+                        setEditForm((f) => ({ ...f, q: e.target.value }))
+                      }
+                    />
+                    {[0, 1, 2, 3].map((oi) => (
                       <div key={oi} className="flex items-center gap-2 mb-1.5">
-                        <span className="text-xs text-muted w-4">{LETTERS[oi]}</span>
-                        <input className="flex-1 bg-bg border border-border rounded-lg px-2 py-1 text-textprimary text-xs outline-none focus:border-accent" value={editForm.opts?.[oi]||''} onChange={e=>{const o=[...editForm.opts];o[oi]=e.target.value;setEditForm(f=>({...f,opts:o}))}}/>
-                        <input type="radio" name={`editAns${i}`} checked={editForm.ans===oi} onChange={()=>setEditForm(f=>({...f,ans:oi}))} className="w-4 h-4 accent-green cursor-pointer"/>
+                        <span className="text-xs text-muted w-4">
+                          {LETTERS[oi]}
+                        </span>
+                        <input
+                          className="flex-1 bg-bg border border-border rounded-lg px-2 py-1 text-textprimary text-xs outline-none focus:border-accent"
+                          value={editForm.opts?.[oi] || ""}
+                          onChange={(e) => {
+                            const o = [...editForm.opts];
+                            o[oi] = e.target.value;
+                            setEditForm((f) => ({ ...f, opts: o }));
+                          }}
+                        />
+                        <input
+                          type="radio"
+                          name={`editAns${i}`}
+                          checked={editForm.ans === oi}
+                          onChange={() =>
+                            setEditForm((f) => ({ ...f, ans: oi }))
+                          }
+                          className="w-4 h-4 accent-green cursor-pointer"
+                        />
                       </div>
                     ))}
                     {/* <div className="text-muted text-[.65rem] mt-2 mb-1">🖼️ প্রশ্নের ছবি (ঐচ্ছিক)</div> */}
@@ -1373,56 +2031,156 @@ if (Number.isNaN(pubUTC.getTime()))
                     </div>
                     {editForm.image ? <img src={editForm.image} alt="" className="max-h-[90px] rounded-lg border border-border object-contain mb-2" onError={e => { e.target.style.display = 'none' }}/> : null} */}
                     {/* Add inside the edit mode div, after the options loop: */}
-<div className="mt-2">
-  <div className="text-muted text-xs mb-1">🖼️ প্রশ্নের ছবি (ঐচ্ছিক)</div>
-  <div className="flex gap-2 items-center">
-    <input
-      className="flex-1 bg-bg border border-border rounded-lg px-2 py-1 text-textprimary text-xs outline-none focus:border-accent"
-      placeholder="https://... or upload"
-      value={editForm.image&&!editForm.image.startsWith('data:')?editForm.image:''}
-      onChange={e=>setEditForm(f=>({...f,image:e.target.value}))}
-    />
-    <label className="flex-shrink-0 px-2 py-1 rounded-lg text-white text-xs cursor-pointer font-bold" style={{background:'linear-gradient(135deg,#38b2f5,#6c63ff)'}}>
-      📁<input type="file" className="hidden" accept="image/*" onChange={e=>{
-        const file=e.target.files[0]; if(!file) return
-        if(file.size>2*1024*1024){showToast('⚠️ সর্বোচ্চ ২MB','wrong-t');return}
-        const r=new FileReader(); r.onload=ev=>setEditForm(f=>({...f,image:ev.target.result})); r.readAsDataURL(file)
-      }}/>
-    </label>
-  </div>
-  {editForm.image&&<img src={editForm.image} alt="" className="mt-1 max-h-[80px] rounded-lg border border-border object-contain" onError={()=>setEditForm(f=>({...f,image:''}))}/>}
-</div>
+                    <div className="mt-2">
+                      <div className="text-muted text-xs mb-1">
+                        🖼️ প্রশ্নের ছবি (ঐচ্ছিক)
+                      </div>
+                      <div className="flex gap-2 items-center">
+                        <input
+                          className="flex-1 bg-bg border border-border rounded-lg px-2 py-1 text-textprimary text-xs outline-none focus:border-accent"
+                          placeholder="https://... or upload"
+                          value={
+                            editForm.image &&
+                            !editForm.image.startsWith("data:")
+                              ? editForm.image
+                              : ""
+                          }
+                          onChange={(e) =>
+                            setEditForm((f) => ({
+                              ...f,
+                              image: e.target.value,
+                            }))
+                          }
+                        />
+                        <label
+                          className="flex-shrink-0 px-2 py-1 rounded-lg text-white text-xs cursor-pointer font-bold"
+                          style={{
+                            background:
+                              "linear-gradient(135deg,#38b2f5,#6c63ff)",
+                          }}
+                        >
+                          📁
+                          <input
+                            type="file"
+                            className="hidden"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files[0];
+                              if (!file) return;
+                              if (file.size > 2 * 1024 * 1024) {
+                                showToast("⚠️ সর্বোচ্চ ২MB", "wrong-t");
+                                return;
+                              }
+                              const r = new FileReader();
+                              r.onload = (ev) =>
+                                setEditForm((f) => ({
+                                  ...f,
+                                  image: ev.target.result,
+                                }));
+                              r.readAsDataURL(file);
+                            }}
+                          />
+                        </label>
+                      </div>
+                      {editForm.image && (
+                        <img
+                          src={editForm.image}
+                          alt=""
+                          className="mt-1 max-h-[80px] rounded-lg border border-border object-contain"
+                          onError={() =>
+                            setEditForm((f) => ({ ...f, image: "" }))
+                          }
+                        />
+                      )}
+                    </div>
                     <div className="flex gap-2 mt-2">
-                      <Btn variant="accent" onClick={saveEdit}>✅ Done</Btn>
-                      <Btn variant="outline" onClick={()=>setEditIdx(null)}>বাতিল</Btn>
+                      <Btn variant="accent" onClick={saveEdit}>
+                        ✅ Done
+                      </Btn>
+                      <Btn variant="outline" onClick={() => setEditIdx(null)}>
+                        বাতিল
+                      </Btn>
                     </div>
                   </div>
                 ) : (
                   /* View mode */
                   <div>
                     <div className="flex justify-between items-start mb-1.5">
-                      <span className="text-xs text-muted font-bold">প্রশ্ন {i+1}</span>
+                      <span className="text-xs text-muted font-bold">
+                        প্রশ্ন {i + 1}
+                      </span>
                       <div className="flex gap-1">
-                        <Btn variant="blue" onClick={()=>startEdit(i)}>✏️</Btn>
-                        <Btn variant="danger" onClick={()=>removeQ(i)}>🗑️</Btn>
+                        <Btn variant="blue" onClick={() => startEdit(i)}>
+                          ✏️
+                        </Btn>
+                        <Btn variant="danger" onClick={() => removeQ(i)}>
+                          🗑️
+                        </Btn>
                       </div>
                     </div>
-                    {q.context && <div className="text-blue text-[.7rem] mb-1">📌 {q.context}</div>}
-                    <div className="text-sm font-display font-bold mb-2 leading-snug">{q.q}</div>
+                    {q.context && (
+                      <div className="text-blue text-[.7rem] mb-1">
+                        📌 {q.context}
+                      </div>
+                    )}
+                    <div className="text-sm font-display font-bold mb-2 leading-snug">
+                      {q.q}
+                    </div>
                     <div className="flex flex-col gap-1">
-                      {q.opts.map((o,oi)=>(
-                        <div key={oi} className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs border ${oi===q.ans?'border-green bg-green/10 text-green':'border-border text-muted'}`}>
-                          <span className="font-bold w-4">{LETTERS[oi]})</span> {o}{oi===q.ans?' ✅':''}
+                      {q.opts.map((o, oi) => (
+                        <div
+                          key={oi}
+                          className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs border ${oi === q.ans ? "border-green bg-green/10 text-green" : "border-border text-muted"}`}
+                        >
+                          <span className="font-bold w-4">{LETTERS[oi]})</span>{" "}
+                          {o}
+                          {oi === q.ans ? " ✅" : ""}
                         </div>
                       ))}
                     </div>
-                      {q.explanation && <div className="mt-1.5 text-[.7rem] text-green bg-green/7 rounded-lg px-2 py-1">💡 {q.explanation}</div>}
-                      {q.image && <img src={q.image} alt="" className="mt-1.5 max-h-[80px] rounded-lg border border-border object-contain"/>}
-                    {q.tags?.length>0 && <div className="flex gap-1 mt-1.5 flex-wrap">{q.tags.map(t=><span key={t} className="text-[.65rem] px-1.5 py-0.5 rounded-full bg-purple/10 border border-purple/30 text-purple">#{t}</span>)}</div>}
-                    {q.image ? <img src={q.image} alt="" className="mt-2 max-h-[120px] rounded-lg border border-border object-contain bg-bg"/> : null}
+                    {q.explanation && (
+                      <div className="mt-1.5 text-[.7rem] text-green bg-green/7 rounded-lg px-2 py-1">
+                        💡 {q.explanation}
+                      </div>
+                    )}
+                    {q.image && (
+                      <img
+                        src={q.image}
+                        alt=""
+                        className="mt-1.5 max-h-[80px] rounded-lg border border-border object-contain"
+                      />
+                    )}
+                    {q.tags?.length > 0 && (
+                      <div className="flex gap-1 mt-1.5 flex-wrap">
+                        {q.tags.map((t) => (
+                          <span
+                            key={t}
+                            className="text-[.65rem] px-1.5 py-0.5 rounded-full bg-purple/10 border border-purple/30 text-purple"
+                          >
+                            #{t}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {q.image ? (
+                      <img
+                        src={q.image}
+                        alt=""
+                        className="mt-2 max-h-[120px] rounded-lg border border-border object-contain bg-bg"
+                      />
+                    ) : null}
                     <label className="mt-2 inline-flex items-center gap-2 text-[.68rem] text-blue cursor-pointer font-medium">
                       📎 ছবি সংযুক্ত করুন
-                      <input type="file" className="hidden" accept="image/*" onChange={e => { const f = e.target.files[0]; attachQImage(i, f); e.target.value = '' }}/>
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const f = e.target.files[0];
+                          attachQImage(i, f);
+                          e.target.value = "";
+                        }}
+                      />
                     </label>
                   </div>
                 )}
@@ -1431,28 +2189,55 @@ if (Number.isNaN(pubUTC.getTime()))
           </div>
 
           {/* Save all */}
-          <button onClick={handleSaveAll} disabled={saving||parsed.length===0}
+          <button
+            onClick={handleSaveAll}
+            disabled={saving || parsed.length === 0}
             className="mt-4 w-full py-3 rounded-xl font-display font-bold text-sm text-[#1a1200] transition hover:-translate-y-0.5 disabled:opacity-50"
-            style={{ background:'linear-gradient(135deg,var(--accent),#ff9f43)', boxShadow:'0 4px 20px rgba(247,201,72,.25)' }}>
-            {saving
-              ? <span className="flex items-center justify-center gap-2"><span className="inline-block w-4 h-4 border-2 border-[#1a1200]/30 border-t-[#1a1200] rounded-full animate-spin"/>সংরক্ষণ হচ্ছে…</span>
-              : `💾 ${parsed.length}টি প্রশ্ন MongoDB-তে সংরক্ষণ করুন`}
+            style={{
+              background: "linear-gradient(135deg,var(--accent),#ff9f43)",
+              boxShadow: "0 4px 20px rgba(247,201,72,.25)",
+            }}
+          >
+            {saving ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="inline-block w-4 h-4 border-2 border-[#1a1200]/30 border-t-[#1a1200] rounded-full animate-spin" />
+                সংরক্ষণ হচ্ছে…
+              </span>
+            ) : (
+              `💾 ${parsed.length}টি প্রশ্ন MongoDB-তে সংরক্ষণ করুন`
+            )}
           </button>
-          {saveMsg && <p className={`text-xs mt-2 text-center font-bold ${saveMsg.startsWith('✅')?'text-green':'text-accent2'}`}>{saveMsg}</p>}
+          {saveMsg && (
+            <p
+              className={`text-xs mt-2 text-center font-bold ${saveMsg.startsWith("✅") ? "text-green" : "text-accent2"}`}
+            >
+              {saveMsg}
+            </p>
+          )}
         </div>
       )}
 
       {/* Tips */}
       <div className="bg-card2 border border-border rounded-xl p-3 text-xs text-muted">
-        <div className="font-bold text-textprimary mb-1.5">💡 সেরা ফলাফলের জন্য:</div>
+        <div className="font-bold text-textprimary mb-1.5">
+          💡 সেরা ফলাফলের জন্য:
+        </div>
         <ul className="space-y-1 list-none">
-          {['Text-based PDF ব্যবহার করুন (scanned image PDF কাজ নাও করতে পারে)','প্রতিটি প্রশ্ন clearly formatted হলে ভালো ফলাফল আসে','Extract হওয়ার পর প্রতিটি প্রশ্ন review করুন','ভুল থাকলে ✏️ দিয়ে inline edit করুন, তারপর save করুন'].map(t=>(
-            <li key={t} className="flex items-start gap-1.5"><span className="text-accent flex-shrink-0 mt-0.5">→</span>{t}</li>
+          {[
+            "Text-based PDF ব্যবহার করুন (scanned image PDF কাজ নাও করতে পারে)",
+            "প্রতিটি প্রশ্ন clearly formatted হলে ভালো ফলাফল আসে",
+            "Extract হওয়ার পর প্রতিটি প্রশ্ন review করুন",
+            "ভুল থাকলে ✏️ দিয়ে inline edit করুন, তারপর save করুন",
+          ].map((t) => (
+            <li key={t} className="flex items-start gap-1.5">
+              <span className="text-accent flex-shrink-0 mt-0.5">→</span>
+              {t}
+            </li>
           ))}
         </ul>
       </div>
     </div>
-  )
+  );
 }
 
 // ── Collection Tab (subject → exam → edit) ──────────────────────────────────
@@ -1765,99 +2550,177 @@ if (Number.isNaN(pubUTC.getTime()))
 //   )
 // }
 function CollectionTab() {
-  const { subjects, levels, showToast } = useQuiz()
-  const [fSubj,      setFSubj]     = useState('')
-  const [fExam,      setFExam]     = useState('')
-  const [exams,      setExams]     = useState([])
-  const [qs,         setQs]        = useState([])
-  const [loading,    setLoading]   = useState(false)
-  const [editQId,    setEditQId]   = useState(null)
-  const [editQForm,  setEditQForm] = useState({})
-  const [qErr,       setQErr]      = useState('')
+  const { subjects, levels, showToast } = useQuiz();
+  const [fSubj, setFSubj] = useState("");
+  const [fExam, setFExam] = useState("");
+  const [exams, setExams] = useState([]);
+  const [qs, setQs] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [editQId, setEditQId] = useState(null);
+  const [editQForm, setEditQForm] = useState({});
+  const [qErr, setQErr] = useState("");
   // Exam-level edit
-  const [examEditOpen, setExamEditOpen] = useState(false)
-  const [examEditForm, setExamEditForm] = useState({})
-  const [examEditErr,  setExamEditErr]  = useState('')
+  const [examEditOpen, setExamEditOpen] = useState(false);
+  const [examEditForm, setExamEditForm] = useState({});
+  const [examEditErr, setExamEditErr] = useState("");
+
+  // Show Exam Merit
+  const [meritModal, setMeritModal] = useState(null);
 
   const loadExams = useCallback(async (subjId) => {
-    if (!subjId) { setExams([]); setFExam(''); setQs([]); return }
+    if (!subjId) {
+      setExams([]);
+      setFExam("");
+      setQs([]);
+      return;
+    }
     // try { const r = await examsAPI.list({ subjectId: subjId }); setExams(r.data) } catch {}
-    try { const r = await adminExamsAPI.listAll({ subjectId: subjId }); setExams(r.data) } catch {}
-  }, [])
-
-  useEffect(() => { loadExams(fSubj) }, [fSubj, loadExams])
+    try {
+      const r = await adminExamsAPI.listAll({ subjectId: subjId });
+      setExams(r.data);
+    } catch {}
+  }, []);
 
   useEffect(() => {
-    if (!fExam) { setQs([]); return }
-    setLoading(true)
-    adminExamsAPI.getQuestions(fExam).then(r => setQs(r.data)).catch(()=>{}).finally(()=>setLoading(false))
-  }, [fExam])
+    loadExams(fSubj);
+  }, [fSubj, loadExams]);
 
-  const selectedExam = exams.find(e => e._id === fExam)
+  useEffect(() => {
+    if (!fExam) {
+      setQs([]);
+      return;
+    }
+    setLoading(true);
+    adminExamsAPI
+      .getQuestions(fExam)
+      .then((r) => setQs(r.data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [fExam]);
+
+  const selectedExam = exams.find((e) => e._id === fExam);
+
+  // --- Show Exam Merit ---
+  const handleAdminMerit = async (exam) => {
+    setMeritModal({
+      examName: exam.examName,
+      leaderboard: [],
+      total: 0,
+      loading: true,
+    });
+    try {
+      const r = await examsAPI.examLeaderboard(exam._id);
+      setMeritModal({
+        examName: exam.examName,
+        leaderboard: r.data.leaderboard || [],
+        total: r.data.total || 0,
+        loading: false,
+      });
+    } catch {
+      showToast("Merit লোড হয়নি", "wrong-t");
+      setMeritModal(null);
+    }
+  };
 
   // ── Delete entire exam ──
   const handleDeleteExam = async () => {
-    if (!selectedExam) return
-    if (!confirm(`"${selectedExam.examName}" এবং এর সব প্রশ্ন মুছে ফেলবো?`)) return
+    if (!selectedExam) return;
+
+    const deleteExam = await Swal.fire({
+      title: `পরীক্ষার নামঃ ${selectedExam.examName}`,
+      text: "আপনি কি নিশ্চিত? একবার ডিলিট করলে পুনরায় এই তথ্য আর খুঁজে পাবেন না।",
+      icon: "warning",
+      theme: "dark",
+      showCancelButton: true,
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: "#3085d6",
+    })
+    // if (!confirm(`"${selectedExam.examName}" এবং এর সব প্রশ্ন মুছে ফেলবো?`))
+    //   return;
+    if (!deleteExam.isConfirmed) return;
     try {
-      await adminExamsAPI.remove(fExam)
-      showToast('🗑️ Exam মুছা হয়েছে', 'wrong-t')
-      setFExam(''); setQs([])
-      loadExams(fSubj)
-    } catch { showToast('❌ মুছা যায়নি', 'wrong-t') }
-  }
+      await adminExamsAPI.remove(fExam);
+      // showToast("🗑️ Exam মুছা হয়েছে", "wrong-t");
+      await Swal.fire({
+        title: "Deleted!",
+        text: "সব তথ্য মুছে ফেলা হয়েছে",
+        icon: "success",
+        theme: "dark"
+      });
+      setFExam("");
+      setQs([]);
+      loadExams(fSubj);
+    } catch {
+      // showToast("❌ মুছা যায়নি", "wrong-t");
+      Swal.fire({
+        title: "Error!",
+        text: "তথ্য মুছে ফেলা যায়নি।",
+        icon: "error",
+        theme: "dark"
+      });
+    }
+  };
 
   // ── Open exam edit modal ──
   const openExamEdit = () => {
-    if (!selectedExam) return
+    if (!selectedExam) return;
     setExamEditForm({
-      examName:    selectedExam.examName,
-      subjectId:   selectedExam.subject?._id  || fSubj,
-      levelId:     selectedExam.level?._id    || '',
+      examName: selectedExam.examName,
+      subjectId: selectedExam.subject?._id || fSubj,
+      levelId: selectedExam.level?._id || "",
       publishDate: selectedExam.publishDate
-        ? new Date(examEditForm.publishDate).toISOString()  
-        : '',
-    })
-    setExamEditErr('')
-    setExamEditOpen(true)
-  }
+        ? new Date(examEditForm.publishDate).toISOString()
+        : "",
+    });
+    setExamEditErr("");
+    setExamEditOpen(true);
+  };
 
   const handleExamEditSave = async () => {
-    if (!examEditForm.examName?.trim()) return setExamEditErr('⚠️ Exam Name লিখুন')
-    if (!examEditForm.publishDate)      return setExamEditErr('⚠️ Publish Date দিন')
+    if (!examEditForm.examName?.trim())
+      return setExamEditErr("⚠️ Exam Name লিখুন");
+    if (!examEditForm.publishDate) return setExamEditErr("⚠️ Publish Date দিন");
     try {
       await adminExamsAPI.update(fExam, {
-        examName:    examEditForm.examName.trim(),
-        subjectId:   examEditForm.subjectId,
-        levelId:     examEditForm.levelId,
+        examName: examEditForm.examName.trim(),
+        subjectId: examEditForm.subjectId,
+        levelId: examEditForm.levelId,
         publishDate: examEditForm.publishDate,
-      })
-      showToast('✅ Exam আপডেট হয়েছে!', 'correct-t')
-      setExamEditOpen(false)
-      loadExams(fSubj)
+      });
+      showToast("✅ Exam আপডেট হয়েছে!", "correct-t");
+      setExamEditOpen(false);
+      loadExams(fSubj);
       // Refresh questions too (publishDate may have changed)
-      const r = await adminExamsAPI.getQuestions(fExam)
-      setQs(r.data)
-    } catch { setExamEditErr('❌ আপডেট হয়নি') }
-  }
+      const r = await adminExamsAPI.getQuestions(fExam);
+      setQs(r.data);
+    } catch {
+      setExamEditErr("❌ আপডেট হয়নি");
+    }
+  };
 
   // ── Question edit ──
   const startEditQ = (q) => {
-    setEditQId(q._id)
-    setEditQForm({ q: q.q, opts: [...q.opts], ans: q.ans })
-    setQErr('')
-  }
+    setEditQId(q._id);
+    setEditQForm({ q: q.q, opts: [...q.opts], ans: q.ans });
+    setQErr("");
+  };
   const handleSaveQ = async () => {
-    if (!editQForm.q?.trim())              return setQErr('⚠️ প্রশ্ন লিখুন')
-    if (editQForm.opts.some(o=>!o?.trim()))return setQErr('⚠️ সব বিকল্প লিখুন')
-    if (editQForm.ans < 0)                 return setQErr('⚠️ সঠিক উত্তর select করুন')
+    if (!editQForm.q?.trim()) return setQErr("⚠️ প্রশ্ন লিখুন");
+    if (editQForm.opts.some((o) => !o?.trim()))
+      return setQErr("⚠️ সব বিকল্প লিখুন");
+    if (editQForm.ans < 0) return setQErr("⚠️ সঠিক উত্তর select করুন");
     try {
-      await questionsAPI.update(editQId, editQForm)
-      showToast('✅ আপডেট!', 'correct-t')
-      const r = await adminExamsAPI.getQuestions(fExam)
-      setQs(r.data); setEditQId(null)
-    } catch { setQErr('❌ সংরক্ষণ হয়নি') }
-  }
+      await questionsAPI.update(editQId, editQForm);
+      showToast("✅ আপডেট!", "correct-t");
+      const r = await adminExamsAPI.getQuestions(fExam);
+      setQs(r.data);
+      setEditQId(null);
+    } catch {
+      setQErr("❌ সংরক্ষণ হয়নি");
+    }
+  };
 
   return (
     <div>
@@ -1867,16 +2730,29 @@ function CollectionTab() {
       <div className="grid grid-cols-2 gap-3 mb-4">
         <div>
           <label className="block text-muted text-xs mb-1">বিষয় *</label>
-          <Sel value={fSubj} onChange={e=>setFSubj(e.target.value)}>
+          <Sel value={fSubj} onChange={(e) => setFSubj(e.target.value)}>
             <option value="">— বিষয় নির্বাচন করুন —</option>
-            {subjects.map(s=><option key={s._id} value={s._id}>{s.emoji} {s.name}</option>)}
+            {subjects.map((s) => (
+              <option key={s._id} value={s._id}>
+                {s.emoji} {s.name}
+              </option>
+            ))}
           </Sel>
         </div>
         <div>
           <label className="block text-muted text-xs mb-1">Exam</label>
-          <Sel value={fExam} onChange={e=>setFExam(e.target.value)} disabled={!fSubj}>
+          <Sel
+            value={fExam}
+            onChange={(e) => setFExam(e.target.value)}
+            disabled={!fSubj}
+          >
             <option value="">— Exam নির্বাচন করুন —</option>
-            {exams.map(e=><option key={e._id} value={e._id}>{e.examName} ({new Date(e.publishDate).toLocaleDateString('bn-BD')})</option>)}
+            {exams.map((e) => (
+              <option key={e._id} value={e._id}>
+                {e.examName} (
+                {new Date(e.publishDate).toLocaleDateString("bn-BD")})
+              </option>
+            ))}
           </Sel>
         </div>
       </div>
@@ -1885,57 +2761,107 @@ function CollectionTab() {
       {selectedExam && (
         <div className="bg-card2 border border-border rounded-xl px-3.5 py-2.5 mb-4 flex flex-wrap gap-2 items-center justify-between">
           <div>
-            <span className="font-display font-bold text-accent text-sm">{selectedExam.examName}</span>
-            <span className="text-muted text-xs ml-2">
-              📅 {new Date(selectedExam.publishDate).toLocaleString('bn-BD')}
+            <span className="font-display font-bold text-accent text-sm">
+              {selectedExam.examName}
             </span>
-            <span className="text-muted text-xs ml-2">({qs.length} প্রশ্ন)</span>
+            <span className="text-muted text-xs ml-2">
+              📅 {new Date(selectedExam.publishDate).toLocaleString("bn-BD")}
+            </span>
+            <span className="text-muted text-xs ml-2">
+              ({qs.length} প্রশ্ন)
+            </span>
           </div>
           <div className="flex gap-2">
-            <Btn variant="blue"   onClick={openExamEdit}>✏️ Exam Edit</Btn>
-            <Btn variant="danger" onClick={handleDeleteExam}>🗑️ Exam মুছুন</Btn>
+            <Btn variant="blue" onClick={() => handleAdminMerit(selectedExam)}>
+              🏆 মেরিট
+            </Btn>
+            <Btn variant="blue" onClick={openExamEdit}>
+              ✏️ Exam Edit
+            </Btn>
+            <Btn variant="danger" onClick={handleDeleteExam}>
+              🗑️ Exam মুছুন
+            </Btn>
           </div>
         </div>
       )}
 
-      {loading && <div className="py-8 text-center text-muted text-sm animate-pulse">লোড হচ্ছে…</div>}
+      {loading && (
+        <div className="py-8 text-center text-muted text-sm animate-pulse">
+          লোড হচ্ছে…
+        </div>
+      )}
       {!loading && fExam && qs.length === 0 && (
-        <div className="py-8 text-center text-muted text-sm"><div className="text-3xl mb-2">📭</div>কোনো প্রশ্ন নেই</div>
+        <div className="py-8 text-center text-muted text-sm">
+          <div className="text-3xl mb-2">📭</div>কোনো প্রশ্ন নেই
+        </div>
       )}
 
       {/* Question list */}
       <div className="flex flex-col gap-3">
         {qs.map((q, i) => (
-          <div key={q._id} className="bg-card border border-border rounded-xl p-3.5">
+          <div
+            key={q._id}
+            className="bg-card border border-border rounded-xl p-3.5"
+          >
             {editQId === q._id ? (
               <div>
-                <textarea className="w-full bg-card2 border-[1.5px] border-border rounded-xl px-3.5 py-2.5 text-textprimary font-body text-sm outline-none focus:border-accent resize-y min-h-[72px] mb-2"
-                  value={editQForm.q} onChange={e=>setEditQForm(f=>({...f,q:e.target.value}))}/>
-                {[0,1,2,3].map(oi=>(
+                <textarea
+                  className="w-full bg-card2 border-[1.5px] border-border rounded-xl px-3.5 py-2.5 text-textprimary font-body text-sm outline-none focus:border-accent resize-y min-h-[72px] mb-2"
+                  value={editQForm.q}
+                  onChange={(e) =>
+                    setEditQForm((f) => ({ ...f, q: e.target.value }))
+                  }
+                />
+                {[0, 1, 2, 3].map((oi) => (
                   <div key={oi} className="flex items-center gap-2 mb-1.5">
-                    <span className="text-xs text-muted w-4">{LETTERS[oi]}</span>
-                    <input className="flex-1 bg-card2 border border-border rounded-xl px-3 py-1.5 text-textprimary text-xs outline-none focus:border-accent"
-                      value={editQForm.opts?.[oi]||''} onChange={e=>{const o=[...editQForm.opts];o[oi]=e.target.value;setEditQForm(f=>({...f,opts:o}))}}/>
-                    <input type="radio" name={`collAns${q._id}`} checked={editQForm.ans===oi}
-                      onChange={()=>setEditQForm(f=>({...f,ans:oi}))} className="w-4 h-4 accent-green cursor-pointer"/>
+                    <span className="text-xs text-muted w-4">
+                      {LETTERS[oi]}
+                    </span>
+                    <input
+                      className="flex-1 bg-card2 border border-border rounded-xl px-3 py-1.5 text-textprimary text-xs outline-none focus:border-accent"
+                      value={editQForm.opts?.[oi] || ""}
+                      onChange={(e) => {
+                        const o = [...editQForm.opts];
+                        o[oi] = e.target.value;
+                        setEditQForm((f) => ({ ...f, opts: o }));
+                      }}
+                    />
+                    <input
+                      type="radio"
+                      name={`collAns${q._id}`}
+                      checked={editQForm.ans === oi}
+                      onChange={() => setEditQForm((f) => ({ ...f, ans: oi }))}
+                      className="w-4 h-4 accent-green cursor-pointer"
+                    />
                   </div>
                 ))}
                 {qErr && <p className="text-accent2 text-xs mb-2">{qErr}</p>}
                 <div className="flex gap-2 mt-2">
-                  <Btn variant="accent" onClick={handleSaveQ}>💾 সংরক্ষণ</Btn>
-                  <Btn variant="outline" onClick={()=>setEditQId(null)}>বাতিল</Btn>
+                  <Btn variant="accent" onClick={handleSaveQ}>
+                    💾 সংরক্ষণ
+                  </Btn>
+                  <Btn variant="outline" onClick={() => setEditQId(null)}>
+                    বাতিল
+                  </Btn>
                 </div>
               </div>
             ) : (
               <div>
                 <div className="flex justify-between items-start mb-1.5">
-                  <span className="text-xs text-muted font-bold">#{i+1}</span>
-                  <Btn variant="blue" onClick={()=>startEditQ(q)}>✏️ সম্পাদনা</Btn>
+                  <span className="text-xs text-muted font-bold">#{i + 1}</span>
+                  <Btn variant="blue" onClick={() => startEditQ(q)}>
+                    ✏️ সম্পাদনা
+                  </Btn>
                 </div>
-                <div className="text-sm font-display font-bold mb-2 leading-snug">{q.q}</div>
+                <div className="text-sm font-display font-bold mb-2 leading-snug">
+                  {q.q}
+                </div>
                 <div className="flex flex-col gap-1">
-                  {q.opts.map((o,oi)=>(
-                    <div key={oi} className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs border ${oi===q.ans?'border-green bg-green/10 text-green':'border-border text-muted'}`}>
+                  {q.opts.map((o, oi) => (
+                    <div
+                      key={oi}
+                      className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs border ${oi === q.ans ? "border-green bg-green/10 text-green" : "border-border text-muted"}`}
+                    >
                       <span className="font-bold w-4">{LETTERS[oi]}</span> {o}
                     </div>
                   ))}
@@ -1947,68 +2873,207 @@ function CollectionTab() {
       </div>
 
       {/* Exam Edit Modal */}
-      <Modal open={examEditOpen} onClose={()=>setExamEditOpen(false)} title="✏️ Exam তথ্য আপডেট করুন">
+      <Modal
+        open={examEditOpen}
+        onClose={() => setExamEditOpen(false)}
+        title="✏️ Exam তথ্য আপডেট করুন"
+      >
         <Row label="Exam Name *">
-          <Inp value={examEditForm.examName||''} onChange={e=>setExamEditForm(f=>({...f,examName:e.target.value}))} placeholder="Exam Name"/>
+          <Inp
+            value={examEditForm.examName || ""}
+            onChange={(e) =>
+              setExamEditForm((f) => ({ ...f, examName: e.target.value }))
+            }
+            placeholder="Exam Name"
+          />
         </Row>
         <Row label="বিষয় *">
-          <Sel value={examEditForm.subjectId||''} onChange={e=>setExamEditForm(f=>({...f,subjectId:e.target.value}))}>
+          <Sel
+            value={examEditForm.subjectId || ""}
+            onChange={(e) =>
+              setExamEditForm((f) => ({ ...f, subjectId: e.target.value }))
+            }
+          >
             <option value="">— বিষয় —</option>
-            {subjects.map(s=><option key={s._id} value={s._id}>{s.emoji} {s.name}</option>)}
+            {subjects.map((s) => (
+              <option key={s._id} value={s._id}>
+                {s.emoji} {s.name}
+              </option>
+            ))}
           </Sel>
         </Row>
         <Row label="Level">
-          <Sel value={examEditForm.levelId||''} onChange={e=>setExamEditForm(f=>({...f,levelId:e.target.value}))}>
+          <Sel
+            value={examEditForm.levelId || ""}
+            onChange={(e) =>
+              setExamEditForm((f) => ({ ...f, levelId: e.target.value }))
+            }
+          >
             <option value="">— Level —</option>
-            {levels.map(l=><option key={l._id} value={l._id}>{l.name}</option>)}
+            {levels.map((l) => (
+              <option key={l._id} value={l._id}>
+                {l.name}
+              </option>
+            ))}
           </Sel>
         </Row>
         <Row label="Publish Date">
-          <Inp type="date" value={examEditForm.publishDate ? examEditForm.publishDate.slice(0,10) : ''} onChange={e=>setExamEditForm(f=>({...f,publishDate:e.target.value}))}/>
+          <Inp
+            type="date"
+            value={
+              examEditForm.publishDate
+                ? examEditForm.publishDate.slice(0, 10)
+                : ""
+            }
+            onChange={(e) =>
+              setExamEditForm((f) => ({ ...f, publishDate: e.target.value }))
+            }
+          />
         </Row>
-        {examEditErr && <p className="text-accent2 text-xs mb-2 text-center">{examEditErr}</p>}
+        {examEditErr && (
+          <p className="text-accent2 text-xs mb-2 text-center">{examEditErr}</p>
+        )}
         <div className="flex gap-2 mt-4">
-          <button onClick={handleExamEditSave} className="flex-1 py-2.5 rounded-xl font-display font-bold text-sm text-[#1a1200]" style={{background:'linear-gradient(135deg,var(--accent),#ff9f43)'}}>💾 সংরক্ষণ</button>
-          <button onClick={()=>setExamEditOpen(false)} className="flex-1 py-2.5 rounded-xl font-display font-semibold text-sm text-muted border border-border">বাতিল</button>
+          <button
+            onClick={handleExamEditSave}
+            className="flex-1 py-2.5 rounded-xl font-display font-bold text-sm text-[#1a1200]"
+            style={{
+              background: "linear-gradient(135deg,var(--accent),#ff9f43)",
+            }}
+          >
+            💾 সংরক্ষণ
+          </button>
+          <button
+            onClick={() => setExamEditOpen(false)}
+            className="flex-1 py-2.5 rounded-xl font-display font-semibold text-sm text-muted border border-border"
+          >
+            বাতিল
+          </button>
         </div>
       </Modal>
+
+      <Modal
+        open={!!meritModal}
+        onClose={() => setMeritModal(null)}
+        title={`🏆 ${meritModal?.examName || ""} — Merit`}
+      >
+        {meritModal?.loading && (
+          <div className="py-8 text-center text-muted animate-pulse">
+            লোড হচ্ছে…
+          </div>
+        )}
+        {meritModal &&
+          !meritModal.loading &&
+          meritModal.leaderboard.length === 0 && (
+            <div className="py-8 text-center text-muted">
+              <div className="text-3xl mb-2">📭</div>কেউ অংশগ্রহণ করেনি
+            </div>
+          )}
+        {meritModal &&
+          !meritModal.loading &&
+          meritModal.leaderboard.length > 0 && (
+            <div>
+              <div className="text-muted text-xs mb-3">
+                মোট: {meritModal.total} জন
+              </div>
+              <div className="flex flex-col gap-1.5 max-h-[400px] overflow-y-auto">
+                {meritModal.leaderboard.map((p, i) => {
+                  const medal =
+                    i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : null;
+                  return (
+                    <div
+                      key={i}
+                      className="grid px-3 py-2 bg-card2 border border-border rounded-xl items-center text-sm"
+                      style={{ gridTemplateColumns: "32px 1fr 70px 80px 55px" }}
+                    >
+                      <div
+                        className={`font-bold ${i < 3 ? "text-accent" : "text-muted text-xs"}`}
+                      >
+                        {medal || `#${i + 1}`}
+                      </div>
+                      <div>
+                        <div className="font-semibold text-textprimary text-xs">
+                          {p.playerName}
+                        </div>
+                        {p.school && (
+                          <div className="text-muted text-[.65rem]">
+                            🏛️ {p.school}
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-center">
+                        <span
+                          className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${p.pct >= 70 ? "bg-green/15 text-green" : p.pct >= 40 ? "bg-accent/15 text-accent" : "bg-accent2/15 text-accent2"}`}
+                        >
+                          {p.score}/{p.fullMarks}
+                        </span>
+                      </div>
+                      <div className="text-center text-[.65rem] text-muted">
+                        ✅{p.correct} ❌{p.wrong} ⏭️{p.skip}
+                      </div>
+                      <div className="text-right text-blue text-xs">
+                        {p.timeStr}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+      </Modal>
     </div>
-  )
+  );
 }
 
 function StudentsTab() {
-  const { showToast } = useQuiz()
-  const [students, setStudents]   = useState([])
-  const [loading,  setLoading]    = useState(false)
-  const [search,   setSearch]     = useState('')
-  const [filter,   setFilter]     = useState('')   // '' | 'true' | 'false'
-  const [toggling, setToggling]   = useState(null) // uid being toggled
+  const { showToast } = useQuiz();
+  const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState(""); // '' | 'true' | 'false'
+  const [toggling, setToggling] = useState(null); // uid being toggled
 
   const load = useCallback(async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const params = {}
-      if (search.trim()) params.email = search.trim()
-      if (filter !== '')  params.hasPurchased = filter
-      const r = await studentsAPI.getAll(params)
-      setStudents(r.data)
-    } catch { showToast('লোড হয়নি', 'wrong-t') }
-    setLoading(false)
-  }, [search, filter]) // eslint-disable-line
+      const params = {};
+      if (search.trim()) params.email = search.trim();
+      if (filter !== "") params.hasPurchased = filter;
+      const r = await studentsAPI.getAll(params);
+      setStudents(r.data);
+    } catch {
+      showToast("লোড হয়নি", "wrong-t");
+    }
+    setLoading(false);
+  }, [search, filter]); // eslint-disable-line
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const handleToggle = async (student) => {
-    const next = !student.hasPurchased
-    if (!confirm(`"${student.email}" এর Purchase status ${next ? 'সক্রিয়' : 'নিষ্ক্রিয়'} করবো?`)) return
-    setToggling(student.firebaseUid)
+    const next = !student.hasPurchased;
+    if (
+      !confirm(
+        `"${student.email}" এর Purchase status ${next ? "সক্রিয়" : "নিষ্ক্রিয়"} করবো?`,
+      )
+    )
+      return;
+    setToggling(student.firebaseUid);
     try {
-      await studentsAPI.updatePurchase(student.firebaseUid, next)
-      showToast(next ? '✅ Purchase সক্রিয় করা হয়েছে' : '⚠️ Purchase নিষ্ক্রিয় করা হয়েছে', next ? 'correct-t' : 'wrong-t')
-      load()
-    } catch { showToast('❌ আপডেট হয়নি', 'wrong-t') }
-    setToggling(null)
-  }
+      await studentsAPI.updatePurchase(student.firebaseUid, next);
+      showToast(
+        next
+          ? "✅ Purchase সক্রিয় করা হয়েছে"
+          : "⚠️ Purchase নিষ্ক্রিয় করা হয়েছে",
+        next ? "correct-t" : "wrong-t",
+      );
+      load();
+    } catch {
+      showToast("❌ আপডেট হয়নি", "wrong-t");
+    }
+    setToggling(null);
+  };
 
   return (
     <div>
@@ -2018,182 +3083,304 @@ function StudentsTab() {
           className="flex-1 min-w-[180px]"
           placeholder="ইমেইল দিয়ে খুঁজুন…"
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={(e) => setSearch(e.target.value)}
         />
-        <Sel className="w-auto text-xs py-1.5 px-2.5" value={filter} onChange={e=>setFilter(e.target.value)}>
+        <Sel
+          className="w-auto text-xs py-1.5 px-2.5"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+        >
           <option value="">— সব Student —</option>
           <option value="true">✅ Purchased</option>
           <option value="false">❌ Not Purchased</option>
         </Sel>
       </div>
 
-      {loading && <div className="py-8 text-center text-muted text-sm animate-pulse">লোড হচ্ছে…</div>}
+      {loading && (
+        <div className="py-8 text-center text-muted text-sm animate-pulse">
+          লোড হচ্ছে…
+        </div>
+      )}
 
       {!loading && students.length === 0 && (
-        <div className="py-8 text-center text-muted text-sm"><div className="text-3xl mb-2">👤</div>কোনো Student নেই</div>
+        <div className="py-8 text-center text-muted text-sm">
+          <div className="text-3xl mb-2">👤</div>কোনো Student নেই
+        </div>
       )}
 
       <div className="flex flex-col gap-2">
-        {students.map(s => (
-          <div key={s.firebaseUid} className="bg-card border border-border rounded-xl px-3.5 py-3 flex flex-wrap gap-3 items-center justify-between">
+        {students.map((s) => (
+          <div
+            key={s.firebaseUid}
+            className="bg-card border border-border rounded-xl px-3.5 py-3 flex flex-wrap gap-3 items-center justify-between"
+          >
             <div className="flex-1 min-w-0">
-              <div className="font-semibold text-textprimary text-sm truncate">{s.displayName || '—'}</div>
+              <div className="font-semibold text-textprimary text-sm truncate">
+                {s.displayName || "—"}
+              </div>
               <div className="text-muted text-xs truncate">{s.email}</div>
               <div className="flex flex-wrap gap-2 mt-1">
-                <span className={`text-[.65rem] px-1.5 py-0.5 rounded-full border ${s.emailVerified?'border-green/40 text-green bg-green/8':'border-accent2/40 text-accent2 bg-accent2/8'}`}>
-                  {s.emailVerified ? '✅ Verified' : '❌ Unverified'}
+                <span
+                  className={`text-[.65rem] px-1.5 py-0.5 rounded-full border ${s.emailVerified ? "border-green/40 text-green bg-green/8" : "border-accent2/40 text-accent2 bg-accent2/8"}`}
+                >
+                  {s.emailVerified ? "✅ Verified" : "❌ Unverified"}
                 </span>
                 <span className="text-[.65rem] px-1.5 py-0.5 rounded-full border border-border text-muted">
-                  📱 {s.devices?.length || 0} device{s.devices?.length !== 1 ? 's' : ''}
+                  📱 {s.devices?.length || 0} device
+                  {s.devices?.length !== 1 ? "s" : ""}
                 </span>
                 {s.purchasedAt && (
                   <span className="text-[.65rem] px-1.5 py-0.5 rounded-full border border-border text-muted">
-                    📅 {new Date(s.purchasedAt).toLocaleDateString('bn-BD')}
+                    📅 {new Date(s.purchasedAt).toLocaleDateString("bn-BD")}
                   </span>
                 )}
               </div>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
-              <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${s.hasPurchased?'bg-green/15 text-green':'bg-accent2/15 text-accent2'}`}>
-                {s.hasPurchased ? '✅ Purchased' : '❌ Not Purchased'}
+              <span
+                className={`text-xs font-bold px-2.5 py-1 rounded-full ${s.hasPurchased ? "bg-green/15 text-green" : "bg-accent2/15 text-accent2"}`}
+              >
+                {s.hasPurchased ? "✅ Purchased" : "❌ Not Purchased"}
               </span>
               <button
                 onClick={() => handleToggle(s)}
                 disabled={toggling === s.firebaseUid}
-                className={`text-xs font-display font-bold px-3 py-1.5 rounded-lg border transition hover:-translate-y-0.5 disabled:opacity-50 ${s.hasPurchased?'border-accent2/40 text-accent2':'border-green/40 text-green'}`}>
-                {toggling === s.firebaseUid ? '⏳' : s.hasPurchased ? 'Revoke' : 'Approve'}
+                className={`text-xs font-display font-bold px-3 py-1.5 rounded-lg border transition hover:-translate-y-0.5 disabled:opacity-50 ${s.hasPurchased ? "border-accent2/40 text-accent2" : "border-green/40 text-green"}`}
+              >
+                {toggling === s.firebaseUid
+                  ? "⏳"
+                  : s.hasPurchased
+                    ? "Revoke"
+                    : "Approve"}
               </button>
             </div>
           </div>
         ))}
       </div>
     </div>
-  )
+  );
 }
 
 // ── Settings Tab ──────────────────────────────────────────────────────────────
 function SettingsTab() {
-  const { timerMin, setTimerMin, quizOptions, setQuizOptions, showToast } = useQuiz()
-  const [newTimer, setNewTimer] = useState(timerMin)
-  const [newPass,  setNewPass]  = useState('')
-  const [confPass, setConfPass] = useState('')
-  const [passErr,  setPassErr]  = useState('')
-  const [saving,   setSaving]   = useState(false)
+  const { timerMin, setTimerMin, quizOptions, setQuizOptions, showToast } =
+    useQuiz();
+  const [newTimer, setNewTimer] = useState(timerMin);
+  const [newPass, setNewPass] = useState("");
+  const [confPass, setConfPass] = useState("");
+  const [passErr, setPassErr] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const saveTimer = async () => {
-    const m = parseInt(newTimer)
-    if (m<1||m>180) { showToast('⚠️ ১–১৮০ মিনিট','wrong-t'); return }
-    setSaving(true)
-    try { await settingsAPI.update({ timerMin: m }); setTimerMin(m); showToast(`✅ Timer: ${m} মিনিট`,'correct-t') } catch {}
-    setSaving(false)
-  }
+    const m = parseInt(newTimer);
+    if (m < 1 || m > 180) {
+      showToast("⚠️ ১–১৮০ মিনিট", "wrong-t");
+      return;
+    }
+    setSaving(true);
+    try {
+      await settingsAPI.update({ timerMin: m });
+      setTimerMin(m);
+      showToast(`✅ Timer: ${m} মিনিট`, "correct-t");
+    } catch {}
+    setSaving(false);
+  };
 
   const savePass = async () => {
-    if (!newPass) { setPassErr('⚠️ লিখুন!'); return }
-    if (newPass.length<4) { setPassErr('⚠️ ৪+ অক্ষর!'); return }
-    if (newPass!==confPass) { setPassErr('⚠️ মিলছে না!'); return }
-    setSaving(true)
+    if (!newPass) {
+      setPassErr("⚠️ লিখুন!");
+      return;
+    }
+    if (newPass.length < 4) {
+      setPassErr("⚠️ ৪+ অক্ষর!");
+      return;
+    }
+    if (newPass !== confPass) {
+      setPassErr("⚠️ মিলছে না!");
+      return;
+    }
+    setSaving(true);
     try {
-      const { authAPI } = await import('../../api/index.js')
-      await authAPI.changePassword(newPass)
-      setNewPass(''); setConfPass(''); setPassErr('')
-      showToast('✅ পাসওয়ার্ড পরিবর্তিত!','correct-t')
-    } catch (e) { setPassErr(e.response?.data?.error||'❌ হয়নি') }
-    setSaving(false)
-  }
+      const { authAPI } = await import("../../api/index.js");
+      await authAPI.changePassword(newPass);
+      setNewPass("");
+      setConfPass("");
+      setPassErr("");
+      showToast("✅ পাসওয়ার্ড পরিবর্তিত!", "correct-t");
+    } catch (e) {
+      setPassErr(e.response?.data?.error || "❌ হয়নি");
+    }
+    setSaving(false);
+  };
 
   const saveOption = async (key, val) => {
-    const next = { ...quizOptions, [key]: val }
-    setQuizOptions(next)
-    try { await settingsAPI.update({ [key]: val }) } catch {}
-  }
+    const next = { ...quizOptions, [key]: val };
+    setQuizOptions(next);
+    try {
+      await settingsAPI.update({ [key]: val });
+    } catch {}
+  };
 
   const Toggle = ({ label, sub, checked, onChange }) => (
     <div className="flex items-center justify-between py-2.5 border-b border-border last:border-b-0">
-      <div><div className="text-textprimary text-sm">{label}</div>{sub&&<div className="text-muted text-xs mt-0.5">{sub}</div>}</div>
-      <label className="switch flex-shrink-0"><input type="checkbox" checked={checked} onChange={onChange}/><span className="slider"/></label>
+      <div>
+        <div className="text-textprimary text-sm">{label}</div>
+        {sub && <div className="text-muted text-xs mt-0.5">{sub}</div>}
+      </div>
+      <label className="switch flex-shrink-0">
+        <input type="checkbox" checked={checked} onChange={onChange} />
+        <span className="slider" />
+      </label>
     </div>
-  )
+  );
 
   return (
     <div>
-      <div className="font-display font-bold text-sm mb-4">⚙️ Quiz Settings</div>
+      <div className="font-display font-bold text-sm mb-4">
+        ⚙️ Quiz Settings
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
         <div className="bg-card border border-border rounded-2xl p-4">
-          <div className="font-display font-bold text-blue text-sm mb-3">⏱️ Quiz Timer</div>
+          <div className="font-display font-bold text-blue text-sm mb-3">
+            ⏱️ Quiz Timer
+          </div>
           <label className="text-muted text-xs mb-1 block">সময় (মিনিটে)</label>
-          <Inp type="number" min={1} max={180} value={newTimer} onChange={e=>setNewTimer(e.target.value)}/>
-          <div className="text-xs text-muted mt-1 mb-2">বর্তমান: <span className="text-textprimary font-semibold">{timerMin} মিনিট</span></div>
-          <Btn variant="green" onClick={saveTimer}>{saving?'…':'💾 সংরক্ষণ'}</Btn>
+          <Inp
+            type="number"
+            min={1}
+            max={180}
+            value={newTimer}
+            onChange={(e) => setNewTimer(e.target.value)}
+          />
+          <div className="text-xs text-muted mt-1 mb-2">
+            বর্তমান:{" "}
+            <span className="text-textprimary font-semibold">
+              {timerMin} মিনিট
+            </span>
+          </div>
+          <Btn variant="green" onClick={saveTimer}>
+            {saving ? "…" : "💾 সংরক্ষণ"}
+          </Btn>
         </div>
         <div className="bg-card border border-border rounded-2xl p-4">
-          <div className="font-display font-bold text-blue text-sm mb-3">🔐 Admin Password</div>
+          <div className="font-display font-bold text-blue text-sm mb-3">
+            🔐 Admin Password
+          </div>
           <label className="text-muted text-xs mb-1 block">নতুন Password</label>
-          <Inp type="password" placeholder="নতুন পাসওয়ার্ড" value={newPass} onChange={e=>setNewPass(e.target.value)} className="mb-2"/>
+          <Inp
+            type="password"
+            placeholder="নতুন পাসওয়ার্ড"
+            value={newPass}
+            onChange={(e) => setNewPass(e.target.value)}
+            className="mb-2"
+          />
           <label className="text-muted text-xs mb-1 block">নিশ্চিত করুন</label>
-          <Inp type="password" placeholder="আবার লিখুন" value={confPass} onChange={e=>setConfPass(e.target.value)} className="mb-2"/>
-          {passErr&&<p className="text-accent2 text-xs mb-2">{passErr}</p>}
-          <Btn variant="blue" onClick={savePass}>{saving?'…':'🔒 পরিবর্তন'}</Btn>
+          <Inp
+            type="password"
+            placeholder="আবার লিখুন"
+            value={confPass}
+            onChange={(e) => setConfPass(e.target.value)}
+            className="mb-2"
+          />
+          {passErr && <p className="text-accent2 text-xs mb-2">{passErr}</p>}
+          <Btn variant="blue" onClick={savePass}>
+            {saving ? "…" : "🔒 পরিবর্তন"}
+          </Btn>
         </div>
       </div>
       <div className="bg-card border border-border rounded-2xl p-4">
-        <div className="font-display font-bold text-blue text-sm mb-2">🎛️ Quiz Options</div>
-        <Toggle label="Options shuffle" sub="বিকল্পগুলো random order-এ" checked={!!quizOptions.shuffle} onChange={e=>saveOption('shuffle',e.target.checked)}/>
-        <Toggle label="Explanation দেখানো" sub="Result-এ উত্তরের ব্যাখ্যা" checked={quizOptions.showExplanation!==false} onChange={e=>saveOption('showExplanation',e.target.checked)}/>
-        <Toggle label="প্রশ্ন random order" sub="প্রতিবার ক্রম বদলাবে" checked={quizOptions.randomQ!==false} onChange={e=>saveOption('randomQ',e.target.checked)}/>
+        <div className="font-display font-bold text-blue text-sm mb-2">
+          🎛️ Quiz Options
+        </div>
+        <Toggle
+          label="Options shuffle"
+          sub="বিকল্পগুলো random order-এ"
+          checked={!!quizOptions.shuffle}
+          onChange={(e) => saveOption("shuffle", e.target.checked)}
+        />
+        <Toggle
+          label="Explanation দেখানো"
+          sub="Result-এ উত্তরের ব্যাখ্যা"
+          checked={quizOptions.showExplanation !== false}
+          onChange={(e) => saveOption("showExplanation", e.target.checked)}
+        />
+        <Toggle
+          label="প্রশ্ন random order"
+          sub="প্রতিবার ক্রম বদলাবে"
+          checked={quizOptions.randomQ !== false}
+          onChange={(e) => saveOption("randomQ", e.target.checked)}
+        />
       </div>
     </div>
-  )
+  );
 }
 
 // ── Main Admin Page ───────────────────────────────────────────────────────────
 const TABS = [
-  { id:'results',   label:'📊 Results' },
-  { id:'subjects',  label:'📚 Subjects' },
-  { id:'levels',    label:'🏫 Levels' },
-  { id:'questions', label:'📝 Questions' },
-  { id:'pdf',       label:'📄 PDF Upload' },
-  { id:'collection', label:'📚 Collection' },
-  { id: 'settings', label: '⚙️ Settings' },
-  { id:'students', label:'👥 Students' },
-]
+  { id: "results", label: "📊 Results" },
+  { id: "subjects", label: "📚 Subjects" },
+  { id: "levels", label: "🏫 Levels" },
+  { id: "questions", label: "📝 Questions" },
+  { id: "pdf", label: "📄 PDF Upload" },
+  { id: "collection", label: "📚 Collection" },
+  { id: "students", label: "👥 Students" },
+  { id: "settings", label: "⚙️ Settings" },
+];
 
 export default function AdminPage() {
-  const navigate = useNavigate()
-  const { logout } = useQuiz()
-  const [activeTab, setActiveTab] = useState('results')
+  const navigate = useNavigate();
+  const { logout } = useQuiz();
+  const [activeTab, setActiveTab] = useState("results");
 
   const handleLogout = () => {
-    logout()
-    navigate('/admin/login', { replace: true })
-  }
+    logout();
+    navigate("/admin/login", { replace: true });
+  };
 
   const content = {
-    results:    <ResultsTab />,
-    subjects:   <SubjectsTab />,
-    levels:     <LevelsTab />,
-    questions:  <QuestionsTab />,
-    pdf:        <PdfTab />,
+    results: <ResultsTab />,
+    subjects: <SubjectsTab />,
+    levels: <LevelsTab />,
+    questions: <QuestionsTab />,
+    pdf: <PdfTab />,
     collection: <CollectionTab />,
     students: <StudentsTab />,
-    settings:   <SettingsTab />,
-  }
+    settings: <SettingsTab />,
+  };
 
   return (
-    <div className="flex flex-col items-center justify-start min-h-screen px-4 py-8 screen-animate" style={{ background:'var(--bg)' }}>
+    <div
+      className="flex flex-col items-center justify-start min-h-screen px-4 py-8 screen-animate"
+      style={{ background: "var(--bg)" }}
+    >
       <div className="w-full max-w-[860px]">
         <div className="flex justify-between items-center mb-4">
-          <h1 className="font-display font-extrabold text-[1.35rem] text-blue">⚙️ Admin Panel</h1>
+          <h1 className="font-display font-extrabold text-[1.35rem] text-blue">
+            ⚙️ Admin Panel
+          </h1>
           <div className="flex items-center gap-2">
-            <Link to="/" className="px-3 py-1.5 border border-border text-muted font-display font-semibold text-xs rounded-xl transition hover:border-blue hover:text-blue">🏠 হোম</Link>
-            <button onClick={handleLogout} className="px-3 py-1.5 border border-border text-muted font-display font-semibold text-xs rounded-xl transition hover:border-accent2 hover:text-accent2">লগআউট</button>
+            <Link
+              to="/"
+              className="px-3 py-1.5 border border-border text-muted font-display font-semibold text-xs rounded-xl transition hover:border-blue hover:text-blue"
+            >
+              🏠 হোম
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="px-3 py-1.5 border border-border text-muted font-display font-semibold text-xs rounded-xl transition hover:border-accent2 hover:text-accent2"
+            >
+              লগআউট
+            </button>
           </div>
         </div>
 
         <div className="flex flex-wrap gap-1 mb-4 bg-card border border-border rounded-xl p-1.5">
-          {TABS.map(t=>(
-            <button key={t.id} onClick={()=>setActiveTab(t.id)}
-              className={`flex-1 py-2 px-1.5 rounded-lg font-display font-bold text-xs transition-all min-w-[80px] ${activeTab===t.id?'bg-card2 text-accent':'bg-transparent text-muted hover:text-textprimary'}`}>
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setActiveTab(t.id)}
+              className={`flex-1 py-2 px-1.5 rounded-lg font-display font-bold text-xs transition-all min-w-[80px] ${activeTab === t.id ? "bg-card2 text-accent" : "bg-transparent text-muted hover:text-textprimary"}`}
+            >
               {t.label}
             </button>
           ))}
@@ -2204,5 +3391,5 @@ export default function AdminPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

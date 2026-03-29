@@ -35,6 +35,8 @@ router.get('/merit/overall', requireAuth, examAttempts.getOverallMerit)
 // Cron: send Bengali reminder emails (secret-protected)
 router.post('/cron/send-exam-reminders', sendExamReminders)
 
+router.get('/exams/:examId/leaderboard', examAttempts.getExamLeaderboard)
+
 // router.get('/admin/settings', getSettings)
 // router.patch('/admin/settings', updateSettings)
 

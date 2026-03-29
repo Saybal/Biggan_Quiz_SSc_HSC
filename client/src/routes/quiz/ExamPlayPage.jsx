@@ -154,7 +154,7 @@ export default function ExamPlayPage() {
           myRank: '?',
           totalInRanked: '?',
           showExplanation: quizOptions.showExplanation,
-          participatedOnTime: true,
+          participatedOnTime: false,
         })
       } finally {
         sessionStorage.setItem('qs_result', 'true')

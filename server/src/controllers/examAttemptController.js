@@ -242,3 +242,32 @@ export async function getOverallMerit(req, res, next) {
     })
   } catch (err) { next(err) }
 }
+
+
+export async function getExamLeaderboard(req, res, next) {
+  try {
+    const { examId } = req.params
+
+    const attempts = await ExamAttempt.find({ examId, participatedOnTime: true })
+      .sort({ score: -1, submittedAt: 1})
+      .lean()
+
+    const leaderboard = attempts.map((a, i) => ({
+      rank:       i + 1,
+      playerName: a.playerName,
+      school:     a.school || '',
+      score:      a.score,
+      fullMarks:  a.fullMarks,
+      pct:        a.pct,
+      correct:    a.correct,
+      wrong:      a.wrong,
+      skip:       a.skip,
+      timeStr:    a.timeStr,
+      submittedAt: a.submittedAt,
+      participatedOnTime: a.participatedOnTime,
+      firebaseUid: a.firebaseUid,
+    }))
+
+    res.json({ leaderboard, total: leaderboard.length })
+  } catch (err) { next(err) }
+}

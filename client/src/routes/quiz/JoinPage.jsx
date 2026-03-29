@@ -123,7 +123,7 @@ export default function JoinPage() {
         theme: "dark",
       });
     }
-  }, [ alreadyDone, participatedOnTime]);
+  }, [ exam]);
 
   const handleStart = () => {
     // if (examId && alreadyDone) {

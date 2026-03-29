@@ -22,7 +22,12 @@ export default function ResultPage() {
   const { entry, questions, myRank, totalInRanked, showExplanation, participatedOnTime } = lastResult
   const { score, fullMarks, pct, correct, wrong, skip, timeStr, name, school } = entry
   const subject = subjects.find(s => s._id === selSubjectId)
-  const level   = levels.find(l => l._id === selLevelId)
+  const level = levels.find(l => l._id === selLevelId)
+  
+  // console.log("Showing participatedOnTime from resultPage: ", participatedOnTime);
+  console.log("lastResult: ", lastResult);
+  
+  
 
   let icon, msg
   if (pct >= 90)      { icon='🏆'; msg='অসাধারণ! তুমি জিনিয়াস!' }
@@ -39,7 +44,7 @@ export default function ResultPage() {
       <div className="w-full max-w-[620px] pb-10">
 
         {/* Rank */}
-        <div className="rounded-2xl px-5 py-4 text-center mb-3" style={{ background:'linear-gradient(135deg,rgba(247,201,72,.12),rgba(255,159,67,.08))', border:'2px solid rgba(247,201,72,.4)' }}>
+        <div className={`rounded-2xl px-5 py-4 text-center mb-3 ${!participatedOnTime? "display: none" : ""}`} style={{ background:'linear-gradient(135deg,rgba(247,201,72,.12),rgba(255,159,67,.08))', border:'2px solid rgba(247,201,72,.4)' }}>
           <div className="text-muted text-xs mb-1">🏆 তোমার Merit Position</div>
           <div className="font-display font-extrabold text-[3.2rem] gradient-text-accent leading-none">{rankDisplay}</div>
           <div className="text-textprimary text-sm mt-1 font-medium">
