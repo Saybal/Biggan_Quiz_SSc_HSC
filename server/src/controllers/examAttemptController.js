@@ -55,13 +55,13 @@ export async function createAttempt(req, res, next) {
       return res.status(403).json({ error: 'This exam is not available yet' })
     }
 
-    const existing = await ExamAttempt.findOne({ examId, firebaseUid: req.user.uid }).lean()
-    if (existing) {
-      return res.status(409).json({
-        error: 'You have already submitted this exam',
-        attemptId: String(existing._id),
-      })
-    }
+    // const existing = await ExamAttempt.findOne({ examId, firebaseUid: req.user.uid }).lean()
+    // if (existing) {
+    //   return res.status(409).json({
+    //     error: 'You have already submitted this exam',
+    //     attemptId: String(existing._id),
+    //   })
+    // }
 
     const startedAt = startedAtRaw ? new Date(startedAtRaw) : new Date()
     const submittedAt = submittedAtRaw ? new Date(submittedAtRaw) : new Date()

@@ -10,6 +10,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useQuiz } from '../../context/QuizContext.jsx'
 // import { subjectsAPI, levelsAPI, questionsAPI, resultsAPI, settingsAPI, pdfAPI, adminExamsAPI } from '../../api/index.js'
+import Swal from "sweetalert2";
 
 function toDatetimeLocalValue(isoOrDate) {
   if (!isoOrDate) return ''
@@ -441,12 +442,40 @@ function ResultsTab() {
     setDL(false)
   }
 
-  const handleClear = async () => {
-    if (!confirm('সব Result মুছে ফেলবো?')) return
-    await resultsAPI.clearAll()
-    showToast('🗑️ মুছা হয়েছে','wrong-t')
-    load()
-  }
+  // const handleClear = async () => {
+  //   if (!confirm('সব Result মুছে ফেলবো?')) return
+  //   await resultsAPI.clearAll()
+  //   showToast('🗑️ মুছা হয়েছে','wrong-t')
+  //   load()
+  // }
+
+const handleClear = async () => {
+  const result = await Swal.fire({
+    title: "আপনি কি নিশ্চিত?",
+    text: "সব Result মুছে ফেলবো?",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#3085d6",
+    cancelButtonColor: "#d33",
+    confirmButtonText: "Yes, delete it!",
+    cancelButtonText: "Cancel",
+    theme: "bootstrap-5-dark"
+  });
+
+  if (!result.isConfirmed) return;
+
+  await resultsAPI.clearAll();
+
+  await Swal.fire({
+    title: "Deleted!",
+    text: "সব Result মুছে ফেলা হয়েছে",
+    icon: "success",
+     theme: "bootstrap-5-dark"
+  });
+
+  showToast('🗑️ মুছা হয়েছে','wrong-t');
+  load();
+};
 
   const re = ['🥇','🥈','🥉']
   const { results=[], stats={} } = data

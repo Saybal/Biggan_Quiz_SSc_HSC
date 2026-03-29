@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useQuiz } from '../../context/QuizContext.jsx'
 import { examsAPI } from '../../api/index.js'
+import Swal from "sweetalert2";
 
 export default function LeaderboardPage() {
   const navigate = useNavigate()
@@ -24,12 +25,25 @@ export default function LeaderboardPage() {
       return
     }
     if (!authLoading && user && !user.emailVerified) {
-      showToast('আপনার অ্যাকাউন্ট ভেরিফাই করা হয়নি। অনুগ্রহ করে আপনার ইমেইল চেক করুন।', 'wrong-t')
+      // showToast('আপনার অ্যাকাউন্ট ভেরিফাই করা হয়নি। অনুগ্রহ করে আপনার ইমেইল চেক করুন।', 'wrong-t')
+      Swal.fire({
+        title: "দুঃখিত",
+        text: "আপনার অ্যাকাউন্ট ভেরিফাই করা হয়নি। অনুগ্রহ করে আপনার ইমেইল চেক করুন।",
+        icon: "error",
+        theme: 'bootstrap-5-dark'
+      });
       navigate('/login', { replace: true })
       return
     }
     if (!authLoading && user && dbUser && !dbUser.hasPurchased) {
-      showToast('আপনি এই কোর্সটি কিনেননি। কোর্সটি কিনতে আগ্রহী হলে যোগাযোগ করুন: +880XXXXXXXXXX', 'wrong-t')
+      // showToast('আপনি এই কোর্সটি কিনেননি। কোর্সটি কিনতে আগ্রহী হলে যোগাযোগ করুন: +880XXXXXXXXXX', 'wrong-t')
+      Swal.fire({
+        title: "দুঃখিত",
+        text: "আপনি এই কোর্সটি কিনেননি। কোর্সটি কিনতে আগ্রহী হলে উক্ত হোয়াটসঅ্যাপ নাম্বারে যোগাযোগ করুন: +880XXXXXXXXXX",
+        icon: "info",
+        theme: 'bootstrap-5-dark',
+        // footer: "<a href=\"#\">Why do I have this issue?</a>",
+      });
       navigate('/', { replace: true })
       return
     }

@@ -25,7 +25,6 @@ export default function ExamPlayPage() {
     setQuizSession,
     setLastResult,
     quizOptions,
-    showToast,
   } = useQuiz()
 
   const [submitting, setSubmitting] = useState(false)
@@ -77,7 +76,6 @@ export default function ExamPlayPage() {
         timeStr,
       }
 
-      let skipResultNav = false
       try {
         if (examId) {
           const payload = {
@@ -148,32 +146,23 @@ export default function ExamPlayPage() {
             participatedOnTime: true,
           })
         }
-      } catch (err) {
-        if (examId && err.response?.status === 409) {
-          showToast(err.response?.data?.error || 'ইতিমধ্যে জমা হয়েছে', 'wrong-t')
-          skipResultNav = true
-          sessionStorage.removeItem('qs_session')
-          navigate('/quiz/exams', { replace: true })
-        } else {
-          setLastResult({
-            entry: localEntry,
-            questions: qs,
-            myRank: '?',
-            totalInRanked: '?',
-            showExplanation: quizOptions.showExplanation,
-            participatedOnTime: true,
-          })
-        }
+      } catch {
+        // API failure: still show result based on local scoring.
+        setLastResult({
+          entry: localEntry,
+          questions: qs,
+          myRank: '?',
+          totalInRanked: '?',
+          showExplanation: quizOptions.showExplanation,
+          participatedOnTime: true,
+        })
       } finally {
-        setSubmitting(false)
-        if (!skipResultNav) {
-          sessionStorage.setItem('qs_result', 'true')
-          sessionStorage.removeItem('qs_session')
-          navigate('/quiz/result')
-        }
+        sessionStorage.setItem('qs_result', 'true')
+        sessionStorage.removeItem('qs_session')
+        navigate('/quiz/result')
       }
     },
-    [navigate, quizOptions.showExplanation, quizSession, setLastResult, showToast],
+    [navigate, quizOptions.showExplanation, quizSession, setLastResult],
   )
 
   const onExpire = useCallback(() => {
@@ -183,27 +172,6 @@ export default function ExamPlayPage() {
 
   const timer = useTimer(quizSession?.totalSeconds || 1800, onExpire)
   useEffect(() => { timer.start() }, []) // eslint-disable-line
-
-  useEffect(() => {
-    const examId = quizSession?.examId || sessionStorage.getItem('qs_examId')
-    if (!examId || !quizSession) return
-    let alive = true
-    examsAPI.attemptStatus(examId)
-      .then(res => {
-        if (!alive || !res.data?.attempted) return
-        showToast('এই পরীক্ষায় তুমি ইতিমধ্যে অংশ নিয়েছ', 'wrong-t')
-        sessionStorage.removeItem('qs_session')
-        navigate('/quiz/exams', { replace: true })
-      })
-      .catch((err) => {
-        if (err.response?.status === 409) {
-          // redirect to result / show message — don't allow retry
-          navigate('/exams', { replace: true })
-          return
-        }
-      })
-    return () => { alive = false }
-  }, [quizSession?.examId, quizSession, navigate, showToast])
 
   if (!quizSession) return null
 
@@ -276,11 +244,11 @@ export default function ExamPlayPage() {
                         key={oi}
                         type="button"
                         onClick={() => {
-                          if (submitting || selected !== undefined) return
+                          if (submitting || selected != undefined) return
                           const newQs = questions.map((qq, j) => (j === qi ? { ...qq, _selected: oi } : qq))
                           setQuizSession({ ...quizSession, questions: newQs })
                         }}
-                        disabled={submitting || selected !== undefined}
+                        disabled={submitting || selected != undefined}
                         className={`text-left border-[1.5px] rounded-xl px-4 py-3 transition ${isSel ? 'border-accent bg-accent/10 text-accent' : 'border-border bg-card2 hover:border-accent hover:text-accent hover:bg-accent/6'}`}
                       >
                         <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg mr-3 font-display font-extrabold flex-shrink-0 ${isSel ? 'bg-accent text-white' : 'bg-border text-muted'}`}>

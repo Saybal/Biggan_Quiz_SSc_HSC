@@ -37,7 +37,7 @@ const ExamAttemptSchema = new mongoose.Schema(
 ExamAttemptSchema.index({ examId: 1, participatedOnTime: 1, score: -1, submittedAt: 1 })
 
 // One attempt per user per exam (critical)
-ExamAttemptSchema.index({ firebaseUid: 1, examId: 1 }, { unique: true })
+// ExamAttemptSchema.index({ firebaseUid: 1, examId: 1 }, { unique: true })
 // Add this line after the existing indexes:
 // ExamAttemptSchema.index({ firebaseUid: 1, examId: 1 }, { unique: true })
 
