@@ -627,10 +627,21 @@ function ResultsTab() {
           </div>
         ))}
       </div>
+      <div
+        className="text-center font-medium px-3 sm:px-4 md:px-6 py-2 sm:py-3 
+  bg-card border border-border rounded-lg sm:rounded-xl 
+  overflow-hidden text-amber-300 mb-3 sm:mb-4"
+      >
+        <p className="text-xs sm:text-sm md:text-base leading-relaxed">
+          প্রতিটি পরীক্ষার আলাদা ফলাফল দেখতে Collection Tab Open করুন।
+        </p>
+      </div>
       <div className="bg-card border border-border rounded-xl overflow-hidden">
         <div
           className="grid text-muted text-xs font-semibold uppercase tracking-wide px-3.5 py-2 bg-card2 border-b border-border"
-          style={{ gridTemplateColumns: "30px 1fr 80px 68px 100px 72px 72px" }}
+          style={{
+            gridTemplateColumns: "30px 0.93fr 70px 90px 90px 72px 110px",
+          }}
         >
           <div>#</div>
           <div>নাম</div>
@@ -654,7 +665,7 @@ function ResultsTab() {
               key={p._id}
               className="grid px-3.5 py-2.5 border-b border-border last:border-0 items-center text-sm hover:bg-accent/3"
               style={{
-                gridTemplateColumns: "30px 1fr 80px 68px 100px 72px 72px",
+                gridTemplateColumns: "30px 1fr 100px 68px 100px 100px 120px",
               }}
             >
               <div
@@ -1364,7 +1375,7 @@ function QuestionsTab() {
     setSaving(true);
     setSaveMsg("");
     try {
-      const { subjectId, levelId, examName, publishDate, publishTime } = config;
+      const { subjectId, levelId, examName, publishDate } = config;
       // const publishDateTime = `${publishDate}T${publishTime || '00:00'}:00`
       // const publishDateTime = new Date(`${publishDate}T${publishTime || '00:00'}:00`).toISOString();
       // const localDate = new Date(`${publishDate}T${publishTime || '00:00'}:00`)
@@ -1575,6 +1586,66 @@ function QuestionsTab() {
                 value={slot.q}
                 onChange={(e) => updateSlot(i, "q", e.target.value)}
               />
+              {/* Question image — upload or URL */}
+              <div className="mb-3">
+                <div className="flex gap-2 items-center">
+                  <Inp
+                    placeholder="🖼️ প্রশ্নের ছবি — URL লিখুন অথবা ফাইল আপলোড করুন (ঐচ্ছিক)"
+                    value={
+                      slot.image && !slot.image.startsWith("data:")
+                        ? slot.image
+                        : ""
+                    }
+                    onChange={(e) => updateSlot(i, "image", e.target.value)}
+                  />
+                  <label
+                    className="flex-shrink-0 flex items-center gap-1 px-3 py-2 rounded-xl font-display font-bold text-xs text-white cursor-pointer"
+                    style={{
+                      background: "linear-gradient(135deg,#38b2f5,#6c63ff)",
+                    }}
+                  >
+                    📁
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (!file) return;
+                        if (file.size > 2 * 1024 * 1024) {
+                          showToast("⚠️ ছবি সর্বোচ্চ ২MB", "wrong-t");
+                          return;
+                        }
+                        const r = new FileReader();
+                        r.onload = (ev) =>
+                          updateSlot(i, "image", ev.target.result);
+                        r.readAsDataURL(file);
+                        e.target.value = "";
+                      }}
+                    />
+                  </label>
+                </div>
+                {slot.image && (
+                  <div className="relative inline-block mt-2">
+                    <img
+                      src={slot.image}
+                      alt=""
+                      className="max-h-[160px] rounded-xl border border-border object-contain"
+                      onError={(e) => {
+                        e.target.style.display = "none";
+                      }}
+                    />
+                    <button
+                      onClick={() => updateSlot(i, "image", "")}
+                      className="absolute top-1 right-1 bg-accent2/90 rounded-full w-5 h-5 text-white text-xs flex items-center justify-center hover:bg-accent2"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Answer Segement */}
               <div className="text-muted text-xs mb-2">
                 সঠিক বিকল্পের পাশের বৃত্ত ✅
               </div>
@@ -1742,11 +1813,11 @@ function PdfTab() {
       // const pubUTC = new Date(pub.getTime() - pub.getTimezoneOffset() * 60000)
 
       // publishDate: new Date(publishDate).toISOString()
-      if (Number.isNaN(pubUTC.getTime())) {
-        setSaveMsg("❌ প্রকাশের সময় সঠিক নয়");
-        setSaving(false);
-        return;
-      }
+      // if (Number.isNaN(pubUTC.getTime())) {
+      //   setSaveMsg("❌ প্রকাশের সময় সঠিক নয়");
+      //   setSaving(false);
+      //   return;
+      // }
       const res = await adminExamsAPI.create({
         subjectId: subjId,
         levelId: lvlId,
@@ -2636,7 +2707,7 @@ function CollectionTab() {
       confirmButtonText: "Yes, delete it!",
       cancelButtonText: "Cancel",
       confirmButtonColor: "#3085d6",
-    })
+    });
     // if (!confirm(`"${selectedExam.examName}" এবং এর সব প্রশ্ন মুছে ফেলবো?`))
     //   return;
     if (!deleteExam.isConfirmed) return;
@@ -2647,7 +2718,7 @@ function CollectionTab() {
         title: "Deleted!",
         text: "সব তথ্য মুছে ফেলা হয়েছে",
         icon: "success",
-        theme: "dark"
+        theme: "dark",
       });
       setFExam("");
       setQs([]);
@@ -2658,7 +2729,7 @@ function CollectionTab() {
         title: "Error!",
         text: "তথ্য মুছে ফেলা যায়নি।",
         icon: "error",
-        theme: "dark"
+        theme: "dark",
       });
     }
   };
@@ -2671,7 +2742,7 @@ function CollectionTab() {
       subjectId: selectedExam.subject?._id || fSubj,
       levelId: selectedExam.level?._id || "",
       publishDate: selectedExam.publishDate
-        ? new Date(examEditForm.publishDate).toISOString()
+        ? new Date(selectedExam.publishDate).toISOString().slice(0, 10)
         : "",
     });
     setExamEditErr("");
